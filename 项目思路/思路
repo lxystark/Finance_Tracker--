@@ -1,0 +1,495 @@
+📚 OOP大作业 - 速成指南
+一、项目最简结构
+finance_tracker/             
+├── main.py   ← 程序入口
+├── exceptions.py             ← 异常处理
+├── models/              ← 类文件
+│   ├── account.py       ← 账户类
+│   └── transaction.py    ← 交易类
+├── structures/          ← 6种数据结构
+│   ├── linked_list.py
+│   ├── stack.py
+│   ├── queue.py
+│   ├── tree.py
+│   ├── bst.py
+│   └── hashmap.py
+└── data/
+    └── data.json        ← 数据存储
+
+二、必须掌握的基础知识
+1. 类和对象（最核心）
+python
+
+# 定义一个类
+class Dog:
+    def __init__(self, name, age):  # 构造方法，创建对象时自动调用
+        self.name = name            # self.name是这个对象的"名字"属性
+        self.age = age              # self.age是这个对象的"年龄"属性
+    
+    def bark(self):                  # 方法（类的函数）
+        print(f"{self.name}在说: 汪!")
+
+# 创建对象
+dog1 = Dog("旺财", 3)   # 调用__init__，创建一只叫旺财、3岁的狗
+dog2 = Dog("小白", 5)    # 创建另一只狗
+
+# 调用方法
+dog1.bark()   # 输出: 旺财在说: 汪!
+dog2.bark()   # 输出: 小白在说: 汪!
+解释：
+
+__init__ 是"构造函数"，创建对象时自动运行
+self 代表"我自己的"，指向当前创建的对象
+self.name = name 把参数name存到对象里
+
+2. 继承
+python
+复制
+# 父类
+class Animal:
+    def __init__(self, name):
+        self.name = name
+    
+    def speak(self):
+        print("...")
+
+# 子类继承父类
+class Dog(Animal):           # class 子类(父类)
+    def speak(self):          # 重写父类方法（多态）
+        print(f"{self.name}说: 汪!")
+
+class Cat(Animal):
+    def speak(self):
+        print(f"{self.name}说: 喵!")
+
+# 使用
+dog = Dog("旺财")
+dog.speak()   # 输出: 旺财说: 汪!
+
+3. 文件读写
+python
+
+import json
+
+# 写入文件
+data = {"name": "张三", "age": 20}
+with open("test.json", "w", encoding="utf-8") as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+
+# 读取文件
+with open("test.json", "r", encoding="utf-8") as f:
+    data = json.load(f)
+    print(data["name"])   # 输出: 张三
+
+三、6种数据结构 - 最简教程
+
+1. DoublyLinkedList（双向链表）
+用途： 存储交易记录，头部插入O(1)
+
+python
+
+class Node:
+    """节点：存储数据 + 指向下一个 + 指向上一个"""
+    def __init__(self, data):
+        self.data = data
+        self.next = None      # 下一个节点
+        self.prev = None      # 上一个节点
+
+class DoublyLinkedList:
+    """双向链表"""
+    def __init__(self):
+        self.head = None      # 头节点
+        self.tail = None      # 尾节点
+        self.size = 0
+    
+    def append(self, data):
+        """尾部添加"""
+        node = Node(data)
+        if self.head is None:      # 空链表
+            self.head = node
+            self.tail = node
+        else:                       # 非空
+            node.prev = self.tail
+            self.tail.next = node
+            self.tail = node
+        self.size += 1
+    
+    def prepend(self, data):
+        """头部添加（O(1)）"""
+        node = Node(data)
+        if self.head is None:
+            self.head = node
+            self.tail = node
+        else:
+            node.next = self.head
+            self.head.prev = node
+            self.head = node
+        self.size += 1
+    
+    def remove(self, node):
+        """删除节点"""
+        if node.prev:
+            node.prev.next = node.next
+        else:
+            self.head = node.next
+        if node.next:
+            node.next.prev = node.prev
+        else:
+            self.tail = node.prev
+        self.size -= 1
+    
+    def __str__(self):
+        """打印链表"""
+        items = []
+        current = self.head
+        while current:
+            items.append(str(current.data))
+            current = current.next
+        return " <-> ".join(items)
+
+# 测试
+ll = DoublyLinkedList()
+ll.append(1)
+ll.append(2)
+ll.append(3)
+ll.prepend(0)
+print(ll)   # 输出: 0 <-> 1 <-> 2 <-> 3
+2. Stack（栈）
+用途： Undo/Redo（撤销/重做）
+
+python
+
+class Stack:
+    """栈：后进先出 LIFO"""
+    def __init__(self):
+        self.items = []          # 用列表存储
+    
+    def push(self, item):
+        """压栈"""
+        self.items.append(item)
+    
+    def pop(self):
+        """弹栈"""
+        if self.is_empty():
+            return None
+        return self.items.pop()
+    
+    def peek(self):
+        """查看栈顶"""
+        if self.is_empty():
+            return None
+        return self.items[-1]
+    
+    def is_empty(self):
+        return len(self.items) == 0
+    
+    def size(self):
+        return len(self.items)
+
+# 测试
+stack = Stack()
+stack.push("操作1")
+stack.push("操作2")
+stack.push("操作3")
+print(stack.pop())   # 输出: 操作3
+print(stack.pop())   # 输出: 操作2
+3. Queue（队列）
+用途： 预算预警通知排队
+
+python
+
+class Queue:
+    """队列：先进先出 FIFO"""
+    def __init__(self):
+        self.items = []
+    
+    def enqueue(self, item):
+        """入队"""
+        self.items.append(item)
+    
+    def dequeue(self):
+        """出队"""
+        if self.is_empty():
+            return None
+        return self.items.pop(0)
+    
+    def front(self):
+        """查看队首"""
+        if self.is_empty():
+            return None
+        return self.items[0]
+    
+    def is_empty(self):
+        return len(self.items) == 0
+    
+    def size(self):
+        return len(self.items)
+
+# 测试
+queue = Queue()
+queue.enqueue("预警1")
+queue.enqueue("预警2")
+queue.enqueue("预警3")
+print(queue.dequeue())   # 输出: 预警1
+print(queue.dequeue())   # 输出: 预警2
+4. Tree（树）
+用途： 分类层级结构
+
+python
+复制
+class TreeNode:
+    """树的节点"""
+    def __init__(self, name):
+        self.name = name
+        self.children = []      # 子节点列表
+        self.parent = None
+    
+    def add_child(self, child):
+        child.parent = self
+        self.children.append(child)
+    
+    def get_level(self):
+        level = 0
+        p = self.parent
+        while p:
+            level += 1
+            p = p.parent
+        return level
+    
+    def print_tree(self):
+        spaces = "  " * self.get_level()
+        print(spaces + self.name)
+        for child in self.children:
+            child.print_tree()
+
+# 测试
+root = TreeNode("支出分类")
+food = TreeNode("餐饮")
+root.add_child(food)
+food.add_child(TreeNode("早餐"))
+food.add_child(TreeNode("午餐"))
+food.add_child(TreeNode("晚餐"))
+root.add_child(TreeNode("交通"))
+root.add_child(TreeNode("娱乐"))
+
+root.print_tree()
+输出：
+
+支出分类
+  餐饮
+    早餐
+    午餐
+    晚餐
+  交通
+  娱乐
+5. BST（二叉搜索树）
+用途： 按日期快速搜索交易
+
+python
+复制
+class BSTNode:
+    """BST节点"""
+    def __init__(self, key, value):
+        self.key = key          # 用于排序（日期）
+        self.value = value      # 存储的数据
+        self.left = None
+        self.right = None
+
+class BST:
+    """二叉搜索树"""
+    def __init__(self):
+        self.root = None
+    
+    def insert(self, key, value):
+        """插入"""
+        if self.root is None:
+            self.root = BSTNode(key, value)
+        else:
+            self._insert(self.root, key, value)
+    
+    def _insert(self, node, key, value):
+        if key < node.key:
+            if node.left is None:
+                node.left = BSTNode(key, value)
+            else:
+                self._insert(node.left, key, value)
+        else:
+            if node.right is None:
+                node.right = BSTNode(key, value)
+            else:
+                self._insert(node.right, key, value)
+    
+    def search(self, key):
+        """搜索"""
+        return self._search(self.root, key)
+    
+    def _search(self, node, key):
+        if node is None or node.key == key:
+            return node.value if node else None
+        if key < node.key:
+            return self._search(node.left, key)
+        return self._search(node.right, key)
+    
+    def range_search(self, min_key, max_key):
+        """范围搜索（递归）"""
+        results = []
+        self._range_search(self.root, min_key, max_key, results)
+        return results
+    
+    def _range_search(self, node, min_k, max_k, results):
+        if node is None:
+            return
+        if min_k <= node.key <= max_k:
+            results.append(node.value)
+        if min_k < node.key:
+            self._range_search(node.left, min_k, max_k, results)
+        if node.key < max_k:
+            self._range_search(node.right, min_k, max_k, results)
+
+# 测试
+bst = BST()
+bst.insert(20260401, "交易1")
+bst.insert(20260405, "交易2")
+bst.insert(20260410, "交易3")
+bst.insert(20260415, "交易4")
+
+print(bst.search(20260405))                    # 输出: 交易2
+print(bst.range_search(20260401, 20260410))   # 输出: ['交易1', '交易2', '交易3']
+6. HashMap（哈希表）
+用途： O(1)快速查找账户
+
+python
+复制
+class HashMap:
+    """哈希表"""
+    def __init__(self, size=100):
+        self.size = size
+        self.buckets = [[] for _ in range(size)]   # 桶
+    
+    def _hash(self, key):
+        return hash(key) % self.size
+    
+    def put(self, key, value):
+        """存储"""
+        index = self._hash(key)
+        bucket = self.buckets[index]
+        for i, (k, v) in enumerate(bucket):
+            if k == key:
+                bucket[i] = (key, value)
+                return
+        bucket.append((key, value))
+    
+    def get(self, key):
+        """查找"""
+        index = self._hash(key)
+        bucket = self.buckets[index]
+        for k, v in bucket:
+            if k == key:
+                return v
+        return None
+    
+    def delete(self, key):
+        """删除"""
+        index = self._hash(key)
+        bucket = self.buckets[index]
+        for i, (k, v) in enumerate(bucket):
+            if k == key:
+                del bucket[i]
+                return True
+        return False
+    
+    def keys(self):
+        """所有键"""
+        result = []
+        for bucket in self.buckets:
+            for k, v in bucket:
+                result.append(k)
+        return result
+
+# 测试
+hm = HashMap()
+hm.put("acc001", {"name": "张三", "balance": 1000})
+hm.put("acc002", {"name": "李四", "balance": 2000})
+print(hm.get("acc001"))   # 输出: {'name': '张三', 'balance': 1000}
+print(hm.get("acc002"))   # 输出: {'name': '李四', 'balance': 2000}
+四、项目入口（main.py 最简模板）
+python
+复制
+import json
+import os
+
+def show_menu():
+    print("\n===== 个人财务追踪系统 =====")
+    print("1. 添加账户")
+    print("2. 添加交易")
+    print("3. 查看账户")
+    print("4. 查看交易")
+    print("5. 设置预算")
+    print("6. 退出")
+
+def main():
+    while True:
+        show_menu()
+        choice = input("请选择: ")
+        
+        if choice == "1":
+            print("添加账户...")
+        elif choice == "2":
+            print("添加交易...")
+        elif choice == "3":
+            print("查看账户...")
+        elif choice == "4":
+            print("查看交易...")
+        elif choice == "5":
+            print("设置预算...")
+        elif choice == "6":
+            print("再见!")
+            break
+        else:
+            print("无效选择，请重新输入")
+
+if __name__ == "__main__":
+    main()
+五、下一步任务
+创建项目文件夹
+写一个最简单的 Account 类
+测试上面的6个数据结构代码
+
+补充：自定义异常
+什么是自定义异常？ 自己定义的错误类型
+
+python
+复制
+# 定义自定义异常
+class InsufficientFundsError(Exception):
+    """余额不足异常"""
+    pass
+
+class AccountNotFoundError(Exception):
+    """账户不存在异常"""
+    pass
+
+class InvalidAmountError(Exception):
+    """无效金额异常"""
+    pass
+
+# 使用
+class Account:
+    def __init__(self, balance):
+        self._balance = balance
+    
+    def withdraw(self, amount):
+        if amount < 0:
+            raise InvalidAmountError("金额不能为负数")
+        if amount > self._balance:
+            raise InsufficientFundsError(f"余额不足！当前余额: {self._balance}")
+        self._balance -= amount
+
+# 捕获异常
+try:
+    acc = Account(100)
+    acc.withdraw(200)
+except InsufficientFundsError as e:
+    print(f"交易失败: {e}")
+except InvalidAmountError as e:
+    print(f"输入错误: {e}")

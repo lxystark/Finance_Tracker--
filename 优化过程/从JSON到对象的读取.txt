@@ -1,0 +1,78 @@
+@Date:15/4/26
+@Author:Xinyuan Lin
+
+我们要从json文件的字典中读取交易记录（字典）并且储存为对象，发现使用类方法封装可以省很多事
+
+
+方式 1：普通函数（类外面）
+python
+
+class Transaction:
+    def __init__(self, tid, type, amount, category, date, note=""):
+        self.tid = tid
+        self.type = type
+        self.amount = amount
+        self.category = category
+        self.date = date
+        self.note = note
+
+    def to_dict(self):
+        return {"tid": self.tid, "type": self.type, ...}
+
+
+# 函数写在类外面
+def transaction_from_dict(data):
+    return Transaction(
+        tid=data["tid"],
+        type=data["type"],
+        amount=data["amount"],
+        category=data["category"],
+        date=data["date"],
+        note=data.get("note", "")
+    )
+调用：
+
+python
+
+data = {"tid": 1, "type": "支出", "amount": 35.5, ...}
+t = transaction_from_dict(data)    # 要记住一个单独的函数名
+
+缺点：创建对象的逻辑和类分开了，不直观，也不好维护。
+
+方式 2：类方法
+python
+
+class Transaction:
+    def __init__(self, tid, type, amount, category, date, note=""):
+        self.tid = tid
+        self.type = type
+        self.amount = amount
+        self.category = category
+        self.date = date
+        self.note = note
+
+    def to_dict(self):
+        return {"tid": self.tid, "type": self.type, ...}
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            tid=data["tid"],
+            type=data["type"],
+            amount=data["amount"],
+            category=data["category"],
+            date=data["date"],
+            note=data.get("note", "")
+        )
+调用：
+
+python
+
+data = {"tid": 1, "type": "支出", "amount": 35.5, ...}
+t = Transaction.from_dict(data)    # 语义清晰：从字典创建交易对象
+
+优点：
+
+创建逻辑封装在类里面，找起来方便
+调用方式语义清晰：Transaction.from_dict(data) 一看就知道"从字典创建交易"
+to_dict() 和 from_dict() 是一对，放在一起好管理
