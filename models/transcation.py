@@ -73,7 +73,7 @@ def update_transaction(linked_list, tid, **kwargs):
     while current:
         if current.data.tid == tid:
             for key, value in kwargs.items():
-                if key, value not in ALLOWED_FIELDS:
+                if key not in ALLOWED_FIELDS:
                     print(f"key:'{key}' is not allowed to update")
                     continue
                 
