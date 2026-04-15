@@ -12,8 +12,9 @@ def show_menu():
     1. 添加交易记录Add Transcations
     2.删除交易记录开发中
     3.修改交易记录
-    4.查看交易记录
-    5.EXIT
+    4.查看交易记录（JSON）
+    5.查看交易记录（双向链表）
+    6.EXIT
     ''')
 
 # ========== 主程序 ==========
@@ -21,6 +22,7 @@ def main():
     # 程序启动：从文件加载数据
     file = load_data()
     print("=== Finance_Tracker ===")
+    
     transactions = file.to_list()
     while True:
         show_menu()
@@ -59,9 +61,11 @@ def main():
             
 
         elif choice == "5":
+            print(file)
+            
+        elif choice == "6":   
             print("再见！数据已自动保存。")
             break
-
         else:
             pass
 #这里写保存数据的代码

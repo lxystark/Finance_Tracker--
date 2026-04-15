@@ -15,6 +15,11 @@ class Transaction:
         self.date = date        # 日期
         self.note = note        # 备注
     
+    # 在 Transaction 类中添加
+    def __str__(self):
+
+        return f"#{self.tid} {self.type} {self.amount}元 [{self.category}] {self.date}"
+
     def to_dict(self):
         """对象 → 字典（便于 JSON 存储）
           to_dict()            from_dict()

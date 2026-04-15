@@ -1,4 +1,4 @@
-📚 OOP大作业 - 速成指南
+📚 OOP大作业
 一、项目最简结构
 finance_tracker/             
 ├── main.py   ← 程序入口
@@ -14,7 +14,8 @@ finance_tracker/
 │   ├── bst.py
 │   └── hashmap.py
 └── data/
-    └── data.json        ← 数据存储
+    └── data.json ← 数据存储
+    └── accounts.json      
 
 二、必须掌握的基础知识
 1. 类和对象（最核心）
