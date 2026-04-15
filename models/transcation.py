@@ -51,19 +51,32 @@ def delete_transaction(linked_list, tid):
         current = current.next
     print(f"未找到交易 #{tid}")
     return False
-def add_transcation(linked_list, tid, type, amount, category, date note=""):
+
+def add_transcation(linked_list, tid, type, amount, category, date, note=""):
     """添加交易"""
-    t = Transaction(tid,type,amount,category,date,note=""):
+    t = Transaction(tid,type,amount,category,date,note)
     linked_list.prepend(t)
     print(f"已添加交易#{tid}")
 
 
 def update_transaction(linked_list, tid, **kwargs):
     """根据交易ID修改，kwargs 是要修改的字段"""
+     # 不允许修改 tid
+    if "tid" in kwargs:
+        print("错误：不能修改交易ID")
+        return False
+    # 允许修改的字段白名单
+    ALLOWED_FIELDS = {"type", "amount", "category", "date", "note"}    
+    
     current = linked_list.head
+
     while current:
         if current.data.tid == tid:
             for key, value in kwargs.items():
+                if key, value not in ALLOWED_FIELDS:
+                    print(f"key:'{key}' is not allowed to update")
+                    continue
+                
                 if hasattr(current.data, key):
                     setattr(current.data, key, value)
             print(f"已修改交易 #{tid}")
