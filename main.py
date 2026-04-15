@@ -1,7 +1,8 @@
+from typing import Any
 import json
 import os
 from structures.linked_list import DoublyLinkedList
-from models.transcation import *
+from models.transaction import *
 
 DATA_FILE = "data/data.json"
 
@@ -9,39 +10,63 @@ DATA_FILE = "data/data.json"
 def show_menu():
     print('''
     1. 添加交易记录Add Transcations
-    2.开发中
-    3.开发中
-    4.退出EXIT
+    2.删除交易记录开发中
+    3.修改交易记录
+    4.查看交易记录
+    5.EXIT
     ''')
 
 # ========== 主程序 ==========
 def main():
     # 程序启动：从文件加载数据
-    transactions = load_data()
-    print(f'加载交易记录：{transactions}')
+    file = load_data()
     print("=== Finance_Tracker ===")
+    transactions = file.to_list()
     while True:
         show_menu()
-        choice = input("请选择 (1-4): ").strip()
+        choice = input("请选择 (num): ").strip()
 
         if choice == "1":
-            add_new_transaction(ll)
+            print("--- 添加交易记录 ---")
+            # tid 查重循环
+            while True:
+                tid = int(input("交易ID: "))
+                if check_tid_exists(file, tid):
+                    print(f"错误：交易ID {tid} 已存在，请重新输入")
+                else:
+                    break
+            type_ = input("类型(收入/支出): ")
+            amount = float(input("金额: "))
+            category = input("分类: ")
+            date = input("日期(YYYY-MM-DD): ")
+            note = input("备注(可留空): ")
+            add_transaction(file, tid, type_, amount, category, date, note)
+            save_data(file)
+            continue
 
         elif choice == "2":
             pass
 
         elif choice == "3":
             pass
-
+        
         elif choice == "4":
+            print("=== 查看交易记录 ===")
+            transactions = file.to_list()
+            print(f'共 {len(transactions)} 条交易记录：')
+            for t in transactions:
+                print(json.dumps(t.to_dict(), ensure_ascii=False, indent=2))
+            
+
+        elif choice == "5":
             print("再见！数据已自动保存。")
             break
 
         else:
-            print("无效选择，请输入 1-4")
-
-
-        pass
+            pass
+#这里写保存数据的代码
+        
+    pass
        
     
 

@@ -1,6 +1,11 @@
 
 
 
+
+
+from structures.linked_list import DoublyLinkedList
+
+
 class Transaction:
     def __init__(self, tid, type, amount, category, date, note=""):
         self.tid = tid          # 交易ID
@@ -40,7 +45,7 @@ class Transaction:
             note=data.get("note", "")  # 用 get 防止旧数据没有这个字段
         )    
 
-def delete_transaction(linked_list, tid):
+def delete_transaction(linked_list: DoublyLinkedList, tid):
     """根据交易ID删除"""
     current = linked_list.head
     while current:
@@ -52,14 +57,24 @@ def delete_transaction(linked_list, tid):
     print(f"未找到交易 #{tid}")
     return False
 
-def add_transcation(linked_list, tid, type, amount, category, date, note=""):
+def check_tid_exists(linked_list: DoublyLinkedList, tid) -> bool:
+    """检查 tid 是否已存在"""
+    current = linked_list.head
+    while current:
+        if current.data.tid == tid:
+            return True
+        current = current.next
+    return False
+
+
+def add_transaction(linked_list: DoublyLinkedList, tid, type, amount, category, date, note=""):
     """添加交易"""
     t = Transaction(tid,type,amount,category,date,note)
     linked_list.prepend(t)
     print(f"已添加交易#{tid}")
 
 
-def update_transaction(linked_list, tid, **kwargs):
+def update_transaction(linked_list: DoublyLinkedList, tid, **kwargs):
     """根据交易ID修改，kwargs 是要修改的字段"""
      # 不允许修改 tid
     if "tid" in kwargs:

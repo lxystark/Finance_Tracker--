@@ -1,0 +1,13 @@
+@author Xinyuan Lin：
+
+program structures, 
+main.py, 
+linked_list.py, 
+transaction.py, 
+exceptions.py, 
+code fixing&debugging
+
+@author Zidan Ye：
+account.py,
+code fixing&debugging,
+etc.
