@@ -8,6 +8,14 @@ from structures.linked_list import DoublyLinkedList
 from transcation import Transaction, Income, Expense
 
 
+class InsufficientBalanceError(Exception):
+    """余额不足异常"""
+    def __init__(self, current_balance: float, requested_amount: float):
+        self.current_balance = current_balance
+        self.requested_amount = requested_amount
+        super().__init__(f"余额不足！当前余额: {current_balance:.2f}, 请求金额: {requested_amount:.2f}")
+
+
 
 class Stack:
     """自定义栈（文档5.2要求）"""
