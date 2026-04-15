@@ -51,6 +51,13 @@ def delete_transaction(linked_list, tid):
         current = current.next
     print(f"未找到交易 #{tid}")
     return False
+def add_transcation(linked_list, tid, type, amount, category, date note=""):
+    """添加交易"""
+    t = Transaction(tid,type,amount,category,date,note=""):
+    linked_list.prepend(t)
+    print(f"已添加交易#{tid}")
+
+
 def update_transaction(linked_list, tid, **kwargs):
     """根据交易ID修改，kwargs 是要修改的字段"""
     current = linked_list.head
