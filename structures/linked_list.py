@@ -118,5 +118,4 @@ if __name__ == "__main__":
        │                                    │
        ▼                                    ▼
   data.json 文件                       Transaction 对象
-
 '''

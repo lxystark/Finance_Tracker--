@@ -31,35 +31,36 @@ class Transaction:
   保存时用              读取时用
             """
         return {
-            "tid": self.tid,
-            "type": self.type,
+            "transaction_id": self.transaction_id,
+            "type": self.get_transaction_type(),
             "amount": self.amount,
             "category": self.category,
-            "date": self.date,
-            "note": self.note
+            "date": self.date.isoformat(),
+            "description": self.description
         }
+
     @classmethod
-    def from_dict(cls, data):
-        """字典 → 对象（从 JSON 恢复时用）"""
-        return cls(
-            tid=data["tid"],
-            type=data["type"],
-            amount=data["amount"],
-            category=data["category"],
-            date=data["date"],
-            note=data.get("note", "")  # 用 get 防止旧数据没有这个字段
-        )    
+    def from_dict(cls, data: Dict[str, Any]) -> 'Transaction':
+        date = datetime.fromisoformat(data["date"])
+        if data["type"] == "income":
+            return Income(data["amount"], date, data["description"], data.get("category"), data.get("transaction_id"))
+        elif data["type"] == "expense":
+            return Expense(data["amount"], date, data["description"], data.get("category"), data.get("transaction_id"))
+        else:
+            raise ValueError(f"未知的交易类型: {data['type']}")
+
+
 
 def delete_transaction(linked_list: DoublyLinkedList, tid):
     """根据交易ID删除"""
     current = linked_list.head
     while current:
-        if current.data.tid == tid:
+        if hasattr(current.data, "transaction_id") and current.data.transaction_id == transaction_id:
             linked_list.remove(current)
-            print(f"已删除交易 #{tid}")
+            print(f"已删除交易 #{transaction_id}")
             return True
         current = current.next
-    print(f"未找到交易 #{tid}")
+    print(f"未找到交易 #{transaction_id}")
     return False
 
 def check_tid_exists(linked_list: DoublyLinkedList, tid) -> bool:
@@ -110,3 +111,18 @@ def update_transaction(linked_list: DoublyLinkedList, target_tid, **kwargs):
         current = current.next
     print(f"未找到交易 #{target_tid}")
     return False
+
+
+class Income(Transaction):
+    """收入类"""
+    def __init__(self, amount: float, date: datetime, description: str, category: Optional[str] = None, transaction_id: Optional[str] = None):
+        super().__init__(amount, date, description, category, transaction_id)
+    def get_transaction_type(self) -> str:
+        return "income"
+
+class Expense(Transaction):
+    """支出类"""
+    def __init__(self, amount: float, date: datetime, description: str, category: Optional[str] = None, transaction_id: Optional[str] = None):
+        super().__init__(amount, date, description, category, transaction_id)
+    def get_transaction_type(self) -> str:
+        return "expense"
