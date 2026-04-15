@@ -89,28 +89,24 @@ def add_transaction(linked_list: DoublyLinkedList, tid, type, amount, category, 
     print(f"已添加交易#{tid}")
 
 
-def update_transaction(linked_list: DoublyLinkedList, tid, **kwargs):
+def update_transaction(linked_list: DoublyLinkedList, target_tid, **kwargs):
     """根据交易ID修改，kwargs 是要修改的字段"""
-     # 不允许修改 tid
-    if "tid" in kwargs:
-        print("错误：不能修改交易ID")
-        return False
     # 允许修改的字段白名单
-    ALLOWED_FIELDS = {"type", "amount", "category", "date", "note"}    
-    
+    ALLOWED_FIELDS = {"tid","type", "amount", "category", "date", "note"}
+
     current = linked_list.head
 
     while current:
-        if current.data.tid == tid:
+        if current.data.tid == target_tid:
             for key, value in kwargs.items():
                 if key not in ALLOWED_FIELDS:
                     print(f"key:'{key}' is not allowed to update")
                     continue
-                
+
                 if hasattr(current.data, key):
                     setattr(current.data, key, value)
-            print(f"已修改交易 #{tid}")
+            print(f"已修改交易 #{target_tid}")
             return True
         current = current.next
-    print(f"未找到交易 #{tid}")
+    print(f"未找到交易 #{target_tid}")
     return False

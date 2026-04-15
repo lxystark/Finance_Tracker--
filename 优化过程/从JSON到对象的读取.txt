@@ -76,3 +76,6 @@ t = Transaction.from_dict(data)    # 语义清晰：从字典创建交易对象
 创建逻辑封装在类里面，找起来方便
 调用方式语义清晰：Transaction.from_dict(data) 一看就知道"从字典创建交易"
 to_dict() 和 from_dict() 是一对，放在一起好管理
+
+@16/4/26, Xinyuan Lin:
+处理了增删交易记录时的tid异常情况

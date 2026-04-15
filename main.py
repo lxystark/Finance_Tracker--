@@ -85,8 +85,76 @@ def main():
 
 
         elif choice == "3":
-            pass
-        
+            print("--- 修改交易记录 ---")
+            # tid 存在性检查
+            while True:
+                tid_input = input("请输入要修改的交易ID (输入 Q 取消，输入 S 查看所有交易记录): ").strip()
+                if tid_input.upper() == "Q":
+                    print("已取消修改操作")
+                    break
+                elif tid_input.upper() == "S":
+                    print(file)
+                    continue
+                try:
+                    tid = int(tid_input)
+                except ValueError:
+                    print("错误：请输入有效的tid")
+                    continue
+                if not check_tid_exists(file, tid):
+                    print(f"错误：交易ID {tid} 不存在，无法执行修改操作")
+                    continue
+                else:
+                    transaction = get_transaction_by_tid(file, tid)
+                    if transaction:
+                        print("\n待修改的交易记录：")
+                        print(json.dumps(transaction.to_dict(), ensure_ascii=False, indent=2))
+                        # 逐字段询问，用户回车保留原值
+                        kwargs = {}
+                        current = transaction.to_dict()
+                        # 交易ID
+                        new_tid_str = input(f"交易ID [当前值: {current['tid']}, 回车跳过]: ").strip()
+                        if new_tid_str:
+                            try:
+                                new_tid = int(new_tid_str)
+                                if check_tid_exists(file, new_tid) and new_tid != current['tid']:
+                                    print(f"错误：交易ID {new_tid} 已存在，请重新操作")
+                                    continue
+                                kwargs['tid'] = new_tid
+                            except ValueError:
+                                print("错误：交易ID 必须为整数，请重新操作")
+                                continue
+                        # 类型
+                        new_type = input(f"类型 [当前值: {current['type']}, 回车跳过]: ").strip()
+                        if new_type:
+                            kwargs['type'] = new_type
+                        # 金额
+                        new_amount_str = input(f"金额 [当前值: {current['amount']}, 回车跳过]: ").strip()
+                        if new_amount_str:
+                            try:
+                                kwargs['amount'] = float(new_amount_str)
+                            except ValueError:
+                                print("错误：金额必须为数字，请重新操作")
+                                continue
+                        # 分类
+                        new_category = input(f"分类 [当前值: {current['category']}, 回车跳过]: ").strip()
+                        if new_category:
+                            kwargs['category'] = new_category
+                        # 日期
+                        new_date = input(f"日期 [当前值: {current['date']}, 回车跳过]: ").strip()
+                        if new_date:
+                            kwargs['date'] = new_date
+                        # 备注
+                        new_note = input(f"备注 [当前值: {current['note']}, 回车跳过]: ").strip()
+                        if new_note:
+                            kwargs['note'] = new_note
+                        # 执行修改
+                        if not kwargs:
+                            print("未做任何修改")
+                        else:
+                            update_transaction(file, tid, **kwargs)
+                            save_data(file)
+                            print(f"已修改交易 #{tid}")
+                    break
         elif choice == "4":
             print("=== 查看交易记录 ===")
             transactions = file.to_list()
