@@ -1,0 +1,82 @@
+[
+  {
+    "tid": 1,
+    "type": "支出",
+    "amount": 35.5,
+    "category": "餐饮",
+    "date": "2026-04-01",
+    "note": "午饭"
+  },
+  {
+    "tid": 2,
+    "type": "支出",
+    "amount": 120.0,
+    "category": "交通",
+    "date": "2026-04-02",
+    "note": "打车去公司"
+  },
+  {
+    "tid": 3,
+    "type": "收入",
+    "amount": 5000.0,
+    "category": "工资",
+    "date": "2026-04-05",
+    "note": "4月工资"
+  },
+  {
+    "tid": 4,
+    "type": "支出",
+    "amount": 299.0,
+    "category": "购物",
+    "date": "2026-04-07",
+    "note": "买衣服"
+  },
+  {
+    "tid": 5,
+    "type": "支出",
+    "amount": -50.0,
+    "category": "餐饮",
+    "date": "2026-04-08",
+    "note": "退款"
+  },
+  {
+    "tid": 6,
+    "type": "收入",
+    "amount": 200.0,
+    "category": "兼职",
+    "date": "2026-04-10",
+    "note": "周末兼职"
+  },
+  {
+    "tid": 7,
+    "type": "支出",
+    "amount": 88.0,
+    "category": "娱乐",
+    "date": "2026-04-12",
+    "note": "看电影"
+  },
+  {
+    "tid": 8,
+    "type": "支出",
+    "amount": 1500.0,
+    "category": "房租",
+    "date": "2026-04-15",
+    "note": "4月房租"
+  },
+  {
+    "tid": 9,
+    "type": "收入",
+    "amount": 100.0,
+    "category": "红包",
+    "date": "2026-04-13",
+    "note": "生日红包"
+  },
+  {
+    "tid": 10,
+    "type": "支出",
+    "amount": 45.0,
+    "category": "餐饮",
+    "date": "2026-04-14",
+    "note": ""
+  }
+]

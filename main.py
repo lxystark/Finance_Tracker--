@@ -5,16 +5,45 @@ from models.transcation import *
 
 DATA_FILE = "data/data.json"
 
-with open(file=DATA_FILE, mode='r') as file:
-    data = json.load(file)
+
+def show_menu():
+    print('''
+    1. 添加交易记录Add Transcations
+    2.开发中
+    3.开发中
+    4.退出EXIT
+    ''')
 
 # ========== 主程序 ==========
 def main():
     # 程序启动：从文件加载数据
-    linked_list = load_data()
-
+    transactions = load_data()
+    print(f'加载交易记录：{transactions}')
     print("=== Finance_Tracker ===")
-    pass
+    while True:
+        show_menu()
+        choice = input("请选择 (1-4): ").strip()
+
+        if choice == "1":
+            add_new_transaction(ll)
+
+        elif choice == "2":
+            pass
+
+        elif choice == "3":
+            pass
+
+        elif choice == "4":
+            print("再见！数据已自动保存。")
+            break
+
+        else:
+            print("无效选择，请输入 1-4")
+
+
+        pass
+       
+    
 
 
 
