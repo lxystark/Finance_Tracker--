@@ -2,7 +2,7 @@ import json
 from structures.linked_list import DoublyLinkedList
 from models.transcation import *
 
-with open('data.data.json', 'r') as file:
+with open('data/data.json', 'r') as file:
     data = json.load(file)
 
 def load_data(filepath="data/data.json"):  # pyright: ignore[reportMissingParameterType]
