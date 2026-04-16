@@ -72,6 +72,16 @@ def check_tid_exists(linked_list: DoublyLinkedList, tid) -> bool:
     return False
 
 
+def get_transaction_by_tid(linked_list: DoublyLinkedList, tid):
+    """根据 tid 获取交易记录"""
+    current = linked_list.head
+    while current:
+        if current.data.tid == tid:
+            return current.data
+        current = current.next
+    return None
+
+
 def add_transaction(linked_list: DoublyLinkedList, tid, type, amount, category, date, note=""):
     """添加交易"""
     t = Transaction(tid,type,amount,category,date,note)

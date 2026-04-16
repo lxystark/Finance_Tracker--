@@ -47,7 +47,41 @@ def main():
             continue
 
         elif choice == "2":
-            pass
+            print("--- 删除交易记录 ---")
+            # tid 存在性检查
+            while True:
+                tid_input = input("请输入要删除的交易ID (输入 Q 取消，输入 S 查看所有交易记录): ").strip()
+                if tid_input.upper() == "Q":
+                    print("已取消删除操作")
+                    break
+                elif tid_input.upper() == "S":
+                    print(file)
+                    continue
+                try:
+                    tid = int(tid_input)
+                except ValueError:
+                    print("错误：请输入有效的tid")
+                    continue
+                if not check_tid_exists(file, tid):
+                    print(f"错误：交易ID {tid} 不存在，无法执行删除操作")
+                    continue
+                else:
+                                
+                # 显示待删除的交易详情
+                    transaction = get_transaction_by_tid(file, tid)
+                    if transaction:
+                        print("\n待删除的交易记录：")
+                        print(json.dumps(transaction.to_dict(), ensure_ascii=False, indent=2))
+                # 确认删除
+                    confirm = input("确认删除？(Y/N): ").strip().upper()
+                    if confirm == "Y":
+                        delete_transaction(file, tid)
+                        save_data(file)
+                        print(f"交易ID {tid} 已成功删除")
+                    else:
+                        print("已取消删除操作")
+                        continue
+
 
         elif choice == "3":
             pass
