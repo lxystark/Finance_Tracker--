@@ -10,11 +10,12 @@ DATA_FILE = "data/data.json"
 def show_menu():
     print('''
     1. 添加交易记录Add Transcations
-    2.删除交易记录开发中
+    2.删除交易记录
     3.修改交易记录
     4.查看交易记录（JSON）
     5.查看交易记录（双向链表）
     6.EXIT
+    7.更多功能
     ''')
 
 # ========== 主程序 ==========
@@ -100,6 +101,8 @@ def main():
         elif choice == "6":   
             print("再见！数据已自动保存。")
             break
+        elif choice == "7":
+            pass
         else:
             pass
 #这里写保存数据的代码
@@ -107,9 +110,6 @@ def main():
     pass
        
     
-
-
-
 # ========== 交易数据读写 ==========
 def load_data(filepath=DATA_FILE):  # pyright: ignore[reportMissingParameterType]
     """从 JSON 文件读取交易记录，重建链表"""
