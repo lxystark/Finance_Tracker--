@@ -170,7 +170,21 @@ def main():
             print("再见！数据已自动保存。")
             break
         elif choice == "7":
-            pass
+            print("--- 排序功能 ---")
+            print("1. 按交易ID升序排列（从小到大）")
+            print("2. 按交易日期降序排列（从新到旧）")
+            print("0. 返回主菜单")
+            sort_choice = input("请选择排序方式: ").strip()
+            if sort_choice == "1":
+                sort_transactions(file, mode="tid_asc")
+                save_data(file)
+            elif sort_choice == "2":
+                sort_transactions(file, mode="date_desc")
+                save_data(file)
+            elif sort_choice == "0":
+                pass
+            else:
+                print("无效选择，请重新输入")
         else:
             pass
 #这里写保存数据的代码
