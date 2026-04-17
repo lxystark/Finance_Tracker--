@@ -84,7 +84,7 @@ def main():
                         continue
 
 
-        elif choice == "3":
+        elif choice == "3":#根据tid定向修改交易记录的功能，tid也可修改
             print("--- 修改交易记录 ---")
             # tid 存在性检查
             while True:
