@@ -6,6 +6,7 @@
 from datetime import datetime
 from structures.linked_list import DoublyLinkedList
 from structures.hashmap import HashMap
+from structures.bst import BST
 
 
 class Transaction:
@@ -55,6 +56,63 @@ def build_tid_index(linked_list: DoublyLinkedList) -> HashMap:
         index.put(current.data.tid, current)
         current = current.next
     return index
+
+
+def build_date_index(linked_list: DoublyLinkedList) -> BST:
+    """根据链表构建 日期 -> [Transaction] 的 BST 索引，支持 O(log n) 范围查询"""
+    bst = BST()
+    current = linked_list.head
+    while current:
+        date_key = _parse_date(current.data.date)
+        existing = bst.search(date_key)
+        if existing is None:
+            bst.insert(date_key, [current.data])
+        else:
+            existing.append(current.data)
+        current = current.next
+    return bst
+
+
+def build_amount_index(linked_list: DoublyLinkedList) -> BST:
+    """根据链表构建 金额 -> [Transaction] 的 BST 索引，支持 O(log n) 范围筛选"""
+    bst = BST()
+    current = linked_list.head
+    while current:
+        amount_key = current.data.amount
+        existing = bst.search(amount_key)
+        if existing is None:
+            bst.insert(amount_key, [current.data])
+        else:
+            existing.append(current.data)
+        current = current.next
+    return bst
+
+
+def query_by_date_range(date_index: BST, start_date: str, end_date: str):
+    """按日期范围查询交易记录 [start_date, end_date]"""
+    start = _parse_date(start_date)
+    end = _parse_date(end_date)
+    results = date_index.range_query(start, end)
+    # results 是 [[tx1, tx2], [tx3], ...] 的嵌套列表，需要展平
+    flat = []
+    for group in results:
+        if isinstance(group, list):
+            flat.extend(group)
+        else:
+            flat.append(group)
+    return flat
+
+
+def query_by_amount_range(amount_index: BST, min_amount: float, max_amount: float):
+    """按金额范围筛选交易记录 [min_amount, max_amount]"""
+    results = amount_index.range_query(min_amount, max_amount)
+    flat = []
+    for group in results:
+        if isinstance(group, list):
+            flat.extend(group)
+        else:
+            flat.append(group)
+    return flat
 
 
 def check_tid_exists(tid, index: HashMap) -> bool:

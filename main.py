@@ -3,6 +3,7 @@ import json
 import os
 from structures.linked_list import DoublyLinkedList
 from structures.hashmap import HashMap
+from structures.bst import BST
 from models.transaction import *
 
 DATA_FILE = "data/data.json"
@@ -25,6 +26,9 @@ def main():
     file = load_data()
     # 构建 tid 索引，查找从 O(n) 提升为 O(1)
     tid_index = build_tid_index(file)
+    # 构建 BST 索引，支持 O(log n) 范围查询
+    date_index = build_date_index(file)
+    amount_index = build_amount_index(file)
     print("=== Finance_Tracker ===")
     
     transactions = file.to_list()
@@ -172,17 +176,47 @@ def main():
             print("再见！数据已自动保存。")
             break
         elif choice == "7":
-            print("--- 排序功能 ---")
+            print("--- 更多功能 ---")
             print("1. 按交易ID升序排列（从小到大）")
             print("2. 按交易日期降序排列（从新到旧）")
+            print("3. 按日期范围查询交易记录")
+            print("4. 按金额范围筛选交易记录")
             print("0. 返回主菜单")
-            sort_choice = input("请选择排序方式: ").strip()
+            sort_choice = input("请选择功能: ").strip()
             if sort_choice == "1":
                 sort_transactions(file, mode="tid_asc")
                 save_data(file)
             elif sort_choice == "2":
                 sort_transactions(file, mode="date_desc")
                 save_data(file)
+            elif sort_choice == "3":
+                print("--- 按日期范围查询 ---")
+                start_date = input("起始日期 (YYYY-MM-DD): ").strip()
+                end_date = input("结束日期 (YYYY-MM-DD): ").strip()
+                try:
+                    results = query_by_date_range(date_index, start_date, end_date)
+                    if results:
+                        print(f"\n共找到 {len(results)} 条记录：")
+                        for t in results:
+                            print(json.dumps(t.to_dict(), ensure_ascii=False, indent=2))
+                    else:
+                        print("该日期范围内无交易记录")
+                except ValueError as e:
+                    print(f"日期格式错误: {e}")
+            elif sort_choice == "4":
+                print("--- 按金额范围筛选 ---")
+                try:
+                    min_amount = float(input("最小金额: "))
+                    max_amount = float(input("最大金额: "))
+                    results = query_by_amount_range(amount_index, min_amount, max_amount)
+                    if results:
+                        print(f"\n共找到 {len(results)} 条记录：")
+                        for t in results:
+                            print(json.dumps(t.to_dict(), ensure_ascii=False, indent=2))
+                    else:
+                        print("该金额范围内无交易记录")
+                except ValueError:
+                    print("错误：金额必须为数字")
             elif sort_choice == "0":
                 pass
             else:
