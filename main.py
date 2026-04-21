@@ -7,6 +7,7 @@ from structures.bst import BST
 from structures.stack import Stack
 from models.transaction import *
 from models.notification import NotificationManager
+from models.category import CategoryManager
 
 DATA_FILE = "data/data.json"
 
@@ -23,6 +24,7 @@ def show_menu(unread=0):
     7. 更多功能
     8. 撤销操作
     9. 查看通知{notify_hint}
+    10. 分类管理
     ''')
 
 # ========== 主程序 ==========
@@ -38,6 +40,9 @@ def main():
     undo_stack = Stack()
     # 通知管理器：大额/异常提醒
     notifier = NotificationManager()
+    # 分类管理器：Tree + Set
+    category_mgr = CategoryManager()
+    category_mgr.init_default_categories()
     notifier.send("info", "欢迎使用 Finance Tracker！数据已加载完成。")
     print("=== Finance_Tracker ===")
     
@@ -57,7 +62,15 @@ def main():
                     break
             type_ = input("类型(收入/支出): ")
             amount = float(input("金额: "))
-            category = input("分类: ")
+            # 展示可选分类列表
+            print(f"可选分类: {category_mgr.get_all_categories()}")
+            category = input("分类(输入已有分类名或自定义新分类): ").strip()
+            # 如果分类不存在，自动添加到树中
+            if category and not category_mgr.category_exists(category):
+                # 根据交易类型确定父分类
+                parent = "支出" if type_ == "支出" else "收入"
+                if category_mgr.add_category(parent, category):
+                    print(f"已自动添加新分类 '{category}' 到 '{parent}' 下")
             date = input("日期(YYYY-MM-DD): ")
             note = input("备注(可留空): ")
             add_transaction(file, tid, type_, amount, category, date, note, tid_index)
@@ -308,11 +321,79 @@ def main():
                 for n in history[-5:]:  # 只显示最近5条
                     print(f"  {n}")
 
-        else:
-            pass
-#这里写保存数据的代码
+        elif choice == "10":
+            while True:
+                print("--- 分类管理 ---")
+                print("1. 查看分类树")
+                print("2. 添加分类")
+                print("3. 删除分类")
+                print("4. 分类统计")
+                print("0. 返回主菜单")
+                cat_choice = input("请选择功能: ").strip()
+                if cat_choice == "1":
+                    print("=== 分类树 ===")
+                    category_mgr.display_tree()
+                    continue
+                elif cat_choice == "2":
+                    print("--- 添加分类 ---")
+                    print(f"当前已有分类: {category_mgr.get_all_categories()}")
+                    parent_name = input("请输入父分类名称: ").strip()
+                    if not category_mgr.category_exists(parent_name):
+                        print(f"错误：父分类 '{parent_name}' 不存在")
+                        continue
+                    else:
+                        new_cat = input("请输入新分类名称: ").strip()
+                        if category_mgr.add_category(parent_name, new_cat):
+                            print(f"成功：分类 '{new_cat}' 已添加到 '{parent_name}' 下")
+                            continue
+                        else:
+                            print(f"错误：分类 '{new_cat}' 已存在，无法重复添加")
+                            continue
+                elif cat_choice == "3":
+                    print("--- 删除分类 ---")
+                    category_mgr.display_tree()
+                    del_cat = input("请输入要删除的分类名称: ").strip()
+                    if del_cat == "全部分类":
+                        print("错误：不允许删除根分类")
+                        continue
+                    elif not category_mgr.category_exists(del_cat):
+                        print(f"错误：分类 '{del_cat}' 不存在")
+                        continue
+                    else:
+                        # 显示即将删除的分类及其子分类
+                        subcats = category_mgr.get_subcategories(del_cat)
+                        if subcats:
+                            print(f"注意：分类 '{del_cat}' 下还有子分类 {subcats}，将一并删除")
+                        confirm = input(f"确认删除分类 '{del_cat}'？(Y/N): ").strip().upper()
+                        if confirm == "Y":
+                            if category_mgr.remove_category(del_cat):
+                                print(f"成功：分类 '{del_cat}' 及其子分类已删除")
+                            else:
+                                print(f"错误：删除失败")
+                            continue
+                        else:
+                            print("已取消删除")
+                            continue
+                elif cat_choice == "4":
+                    print("--- 分类统计 ---")
+                    stats = category_mgr.get_category_statistics(file)
+                    if not stats:
+                        print("暂无交易记录")
+                        continue
+                    else:
+                        print(f"{'分类':<10}{'收入':>10}{'支出':>10}{'净额':>10}{'笔数':>6}")
+                        print("-" * 50)
+                        for cat, data in stats.items():
+                            print(f"{cat:<10}{data['收入']:>10.2f}{data['支出']:>10.2f}{data['净额']:>10.2f}{data['笔数']:>6}")
+                elif cat_choice == "0":
+                    break
+                else:
+                    print("无效选择，请重新输入")
+                    continue
         
-    pass
+
+
+    
        
     
 # ========== 交易数据读写 ==========
