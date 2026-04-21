@@ -1,18 +1,27 @@
 @author Xinyuan Lin：
-
-program structures, 
-main.py, 
-linked_list.py, 
-transaction.py, 
-exceptions.py, 
-code fixing&debugging
+- Program structure design and architecture
+- main.py (menu system, data loading/saving, user interaction, undo system)
+- linked_list.py (DoublyLinkedList implementation)
+- transaction.py (Transaction model, HashMap/BST index building, query functions, sorting)
+- stack.py (Stack implementation for undo system)
+- exceptions.py (custom exception classes: InsufficientFundsError, InvalidAmountError, AccountNotFoundError, InvalidTransactionError)
+- Code fixing & debugging
 
 @author Zidan Ye：
-account.py,
-code fixing&debugging,
-etc.
+- account.py (Account abstract base class, SavingsAccount, CreditAccount; inheritance, polymorphism, encapsulation)
+- queue.py (Queue implementation for notification system)
+- Code fixing & debugging
+- Code testing and quality assurance
 
-@author Yu Chen:
-...
-@author Erhao Yao:
-...
+@author Yu Chen：
+- bst.py (BST implementation with recursive insert/search/delete, range query, inorder traversal)
+- hashmap.py (HashMap implementation with separate chaining, hash function)
+- tree.py (Tree/TreeNode implementation with BFS/DFS traversal, recursive height)
+- set.py (Set implementation based on HashMap)
+
+
+@author Erhao Yao：
+- category.py (CategoryManager combining Tree + Set, category CRUD, recursive serialization/deserialization)
+- notification.py (NotificationManager based on Queue, large expense/negative amount alerts)
+- Initial data generation and testing
+- Report writing
