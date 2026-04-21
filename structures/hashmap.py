@@ -4,7 +4,7 @@
 键 -> 值 映射，支持 O(1) 查找、插入、删除
 """
 
-from typing import Any
+from typing import Any, List, Optional
 
 
 class HashMap:
@@ -61,7 +61,7 @@ class HashMap:
 
         return default
 
-    def remove(self, key: Any) -> Optional[Any]:
+    def remove(self, key: Any) -> Any | None:
         """删除键值对，返回被删除的值，不存在返回 None"""
         index = self._hash(key)
         bucket = self.map[index]
