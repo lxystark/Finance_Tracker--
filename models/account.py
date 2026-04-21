@@ -1,13 +1,5 @@
 from abc import ABC, abstractmethod  # 导入抽象类工具
-
-# ========== 自定义异常（直接写在这里）==========
-class InsufficientFundsError(Exception):
-    """余额不足"""
-    pass
-
-class InvalidAmountError(Exception):
-    """无效金额（负数或零）"""
-    pass
+from exceptions import InsufficientFundsError, InvalidAmountError
 
 
 # ========== 抽象基类 ==========
@@ -70,6 +62,26 @@ class Account(ABC):  # 继承ABC，表示这是抽象类，不能直接创建对
             "type": self.get_account_type()
         }
 
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Account':
+        """字典 → 账户对象（根据 type 字段选择正确的子类）"""
+        from models.account import SavingsAccount, CreditAccount
+        account_type = data.get("type", "savings")
+        if account_type == "credit":
+            return CreditAccount(
+                account_id=data["account_id"],
+                owner=data["owner"],
+                balance=data.get("balance", 0.0),
+                credit_limit=data.get("credit_limit", 5000.0)
+            )
+        else:
+            return SavingsAccount(
+                account_id=data["account_id"],
+                owner=data["owner"],
+                balance=data.get("balance", 0.0),
+                interest_rate=data.get("interest_rate", 0.03)
+            )
+
 
 # ========== 储蓄账户 ==========
 class SavingsAccount(Account):
@@ -88,6 +100,12 @@ class SavingsAccount(Account):
     def calculate_interest(self):
         """计算年利息"""
         return self._balance * self.interest_rate
+
+    def to_dict(self):
+        """储蓄账户多存一个interest_rate字段"""
+        d = super().to_dict()
+        d["interest_rate"] = self.interest_rate
+        return d
 
 
 
@@ -161,6 +179,6 @@ if __name__ == "__main__":
         print(f"捕获异常: {e}")
 
     try:
-        c.deposit(-100)
+        s.deposit(-100)
     except InvalidAmountError as e:
         print(f"捕获异常: {e}")

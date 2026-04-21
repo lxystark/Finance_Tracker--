@@ -10,13 +10,14 @@ from structures.bst import BST
 
 
 class Transaction:
-    def __init__(self, tid, type, amount, category, date, note=""):
+    def __init__(self, tid, type, amount, category, date, note="", account_id=None):
         self.tid = tid          # 交易ID
         self.type = type        # 类型（收入/支出）
         self.amount = amount    # 金额
         self.category = category # 分类
         self.date = date        # 日期
         self.note = note        # 备注
+        self.account_id = account_id  # 关联账户ID（可为None）
     
     # 在 Transaction 类中添加
     def __str__(self):
@@ -25,7 +26,7 @@ class Transaction:
 
     def to_dict(self):
         """对象 → 字典（便于 JSON 存储）"""
-        return {
+        d = {
             "tid": self.tid,
             "type": self.type,
             "amount": self.amount,
@@ -33,6 +34,9 @@ class Transaction:
             "date": self.date,
             "note": self.note
         }
+        if self.account_id is not None:
+            d["account_id"] = self.account_id
+        return d
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Transaction':
@@ -43,7 +47,8 @@ class Transaction:
             amount=data["amount"],
             category=data["category"],
             date=data["date"],
-            note=data.get("note", "")
+            note=data.get("note", ""),
+            account_id=data.get("account_id")  # 向后兼容：旧数据没有此字段
         )
 
 
@@ -140,9 +145,9 @@ def delete_transaction(linked_list: DoublyLinkedList, tid, index: HashMap):
     return False
 
 
-def add_transaction(linked_list: DoublyLinkedList, tid, type, amount, category, date, note="", index: HashMap = None):
+def add_transaction(linked_list: DoublyLinkedList, tid, type, amount, category, date, note="", index: HashMap = None, account_id=None):
     """添加交易（同步更新 HashMap 索引）"""
-    t = Transaction(tid, type, amount, category, date, note)
+    t = Transaction(tid, type, amount, category, date, note, account_id)
     linked_list.prepend(t)
     if index is not None:
         # prepend 后 head 就是新节点
@@ -153,7 +158,7 @@ def add_transaction(linked_list: DoublyLinkedList, tid, type, amount, category, 
 def update_transaction(linked_list: DoublyLinkedList, target_tid, index: HashMap, **kwargs):
     """根据交易ID修改，kwargs 是要修改的字段（通过 HashMap 索引定位，并同步更新索引）"""
     # 允许修改的字段白名单
-    ALLOWED_FIELDS = {"tid", "type", "amount", "category", "date", "note"}
+    ALLOWED_FIELDS = {"tid", "type", "amount", "category", "date", "note", "account_id"}
 
     node = index.get(target_tid)
     if node is None:

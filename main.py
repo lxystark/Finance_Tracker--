@@ -8,9 +8,12 @@ from structures.stack import Stack
 from models.transaction import *
 from models.notification import NotificationManager
 from models.category import CategoryManager
+from models.account import Account, SavingsAccount, CreditAccount
+from exceptions import InsufficientFundsError, InvalidAmountError, AccountNotFoundError
 
 DATA_FILE = "data/data.json"
 CATEGORY_FILE = "data/categories.json"
+ACCOUNT_FILE = "data/accounts.json"
 
 
 def show_menu(unread=0):
@@ -26,6 +29,7 @@ def show_menu(unread=0):
     8. 撤销操作
     9. 查看通知{notify_hint}
     10. 分类管理
+    11. 账户管理
     ''')
 
 # ========== 主程序 ==========
@@ -44,6 +48,8 @@ def main():
     # 分类管理器：Tree + Set
     category_mgr = CategoryManager()
     load_categories(category_mgr)
+    # 账户管理：HashMap 存储 account_id -> Account
+    accounts = load_accounts()
     notifier.send("info", "欢迎使用 Finance Tracker！数据已加载完成。")
     print("=== Finance_Tracker ===")
     
@@ -75,7 +81,27 @@ def main():
                     save_categories(category_mgr)
             date = input("日期(YYYY-MM-DD): ")
             note = input("备注(可留空): ")
-            add_transaction(file, tid, type_, amount, category, date, note, tid_index)
+            # 关联账户（可选）
+            account_id = None
+            if len(accounts) > 0:
+                print(f"已有账户: {list(accounts.keys())}")
+                aid_input = input("关联账户ID (回车跳过): ").strip()
+                if aid_input and aid_input in accounts:
+                    account_id = aid_input
+                    # 自动更新账户余额
+                    acct = accounts[account_id]
+                    try:
+                        if type_ == "收入":
+                            acct.deposit(amount)
+                        elif type_ == "支出":
+                            acct.withdraw(amount)
+                        save_accounts(accounts)
+                    except (InsufficientFundsError, InvalidAmountError) as e:
+                        print(f"账户操作失败: {e}")
+                        account_id = None
+                elif aid_input:
+                    print(f"账户 {aid_input} 不存在，交易将不关联账户")
+            add_transaction(file, tid, type_, amount, category, date, note, tid_index, account_id)
             save_data(file)
             # 记录撤销操作：撤销添加 = 删除
             undo_stack.push({"action": "add", "tid": tid})
@@ -301,6 +327,18 @@ def main():
                     print(f"操作: 删除了分类（共 {len(cats)} 个）")
                     print(f"被删分类: {cat_names}")
                     print("撤销效果: 将恢复上述分类到分类树中")
+                elif op["action"] == "delete_account":
+                    print(f"操作: 创建了账户 {op['account_id']}")
+                    print("撤销效果: 将删除该账户")
+                elif op["action"] == "restore_account":
+                    print(f"操作: 删除了账户 {op['account_data']['account_id']}")
+                    print("撤销效果: 将恢复该账户")
+                elif op["action"] == "account_deposit":
+                    print(f"操作: 向账户 {op['account_id']} 存入 {op['amount']:.2f}")
+                    print(f"撤销效果: 将余额恢复为 {op['old_balance']:.2f}")
+                elif op["action"] == "account_withdraw":
+                    print(f"操作: 从账户 {op['account_id']} 取出 {op['amount']:.2f}")
+                    print(f"撤销效果: 将余额恢复为 {op['old_balance']:.2f}")
                 print("-" * 40)
                 confirm = input("确认执行撤销？(Y/N): ").strip().upper()
                 if confirm != "Y":
@@ -322,7 +360,19 @@ def main():
                     data = op["data"]
                     add_transaction(file, data["tid"], data["type"],
                                     data["amount"], data["category"],
-                                    data["date"], data.get("note", ""), tid_index)
+                                    data["date"], data.get("note", ""), tid_index,
+                                    data.get("account_id"))
+                    # 恢复账户余额
+                    if data.get("account_id") and data["account_id"] in accounts:
+                        acct = accounts[data["account_id"]]
+                        try:
+                            if data["type"] == "收入":
+                                acct.deposit(data["amount"])
+                            elif data["type"] == "支出":
+                                acct.withdraw(data["amount"])
+                            save_accounts(accounts)
+                        except (InsufficientFundsError, InvalidAmountError):
+                            pass
                     save_data(file)
                     print(f"已撤销：恢复了交易 #{data['tid']}")
                 elif op["action"] == "update":
@@ -347,6 +397,40 @@ def main():
                     category_mgr.restore_category(snapshot)
                     save_categories(category_mgr)
                     print(f"已撤销：恢复了分类（共 {len(snapshot.get('categories', []))} 个）")
+                elif op["action"] == "delete_account":
+                    # 撤销创建账户 = 删除该账户
+                    aid = op["account_id"]
+                    if aid in accounts:
+                        del accounts[aid]
+                        save_accounts(accounts)
+                        print(f"已撤销：删除了账户 {aid}")
+                    else:
+                        print(f"无法撤销：账户 {aid} 已不存在")
+                elif op["action"] == "restore_account":
+                    # 撤销删除账户 = 恢复该账户
+                    acct_data = op["account_data"]
+                    acct = Account.from_dict(acct_data)
+                    accounts[acct_data["account_id"]] = acct
+                    save_accounts(accounts)
+                    print(f"已撤销：恢复了账户 {acct_data['account_id']}")
+                elif op["action"] == "account_deposit":
+                    # 撤销存款 = 恢复余额
+                    aid = op["account_id"]
+                    if aid in accounts:
+                        accounts[aid]._balance = op["old_balance"]
+                        save_accounts(accounts)
+                        print(f"已撤销：恢复了账户 {aid} 存款前余额 {op['old_balance']:.2f}")
+                    else:
+                        print(f"无法撤销：账户 {aid} 已不存在")
+                elif op["action"] == "account_withdraw":
+                    # 撤销取款 = 恢复余额
+                    aid = op["account_id"]
+                    if aid in accounts:
+                        accounts[aid]._balance = op["old_balance"]
+                        save_accounts(accounts)
+                        print(f"已撤销：恢复了账户 {aid} 取款前余额 {op['old_balance']:.2f}")
+                    else:
+                        print(f"无法撤销：账户 {aid} 已不存在")
 
         elif choice == "9":
             print("--- 通知中心 ---")
@@ -457,6 +541,221 @@ def main():
                     print("无效选择，请重新输入")
                     continue
         
+        elif choice == "11":
+            while True:
+                print("--- 账户管理 ---")
+                print("1. 查看所有账户")
+                print("2. 创建储蓄账户")
+                print("3. 创建信用账户")
+                print("4. 存款")
+                print("5. 取款")
+                print("6. 查看账户余额")
+                print("7. 计算利息")
+                print("8. 删除账户")
+                print("9. 查看账户关联交易")
+                print("0. 返回主菜单")
+                acct_choice = input("请选择功能: ").strip()
+                
+                if acct_choice == "1":
+                    # 查看所有账户
+                    if not accounts:
+                        print("暂无账户")
+                    else:
+                        print(f"共 {len(accounts)} 个账户：")
+                        print("-" * 60)
+                        for aid, acct in accounts.items():
+                            print(f"  {acct}")
+                    continue
+                
+                elif acct_choice == "2":
+                    # 创建储蓄账户
+                    aid = input("账户ID: ").strip()
+                    if aid in accounts:
+                        print(f"错误：账户ID {aid} 已存在")
+                        continue
+                    owner = input("持有人姓名: ").strip()
+                    balance_str = input("初始余额 (默认0): ").strip()
+                    balance = float(balance_str) if balance_str else 0.0
+                    rate_str = input("年利率 (默认0.03): ").strip()
+                    interest_rate = float(rate_str) if rate_str else 0.03
+                    acct = SavingsAccount(aid, owner, balance, interest_rate)
+                    accounts[aid] = acct
+                    save_accounts(accounts)
+                    print(f"成功：储蓄账户 {aid} 已创建")
+                    # 撤销：删除该账户
+                    undo_stack.push({"action": "delete_account", "account_id": aid})
+                    continue
+                
+                elif acct_choice == "3":
+                    # 创建信用账户
+                    aid = input("账户ID: ").strip()
+                    if aid in accounts:
+                        print(f"错误：账户ID {aid} 已存在")
+                        continue
+                    owner = input("持有人姓名: ").strip()
+                    balance_str = input("初始余额 (默认0): ").strip()
+                    balance = float(balance_str) if balance_str else 0.0
+                    limit_str = input("信用额度 (默认5000): ").strip()
+                    credit_limit = float(limit_str) if limit_str else 5000.0
+                    acct = CreditAccount(aid, owner, balance, credit_limit)
+                    accounts[aid] = acct
+                    save_accounts(accounts)
+                    print(f"成功：信用账户 {aid} 已创建")
+                    # 撤销：删除该账户
+                    undo_stack.push({"action": "delete_account", "account_id": aid})
+                    continue
+                
+                elif acct_choice == "4":
+                    # 存款
+                    aid = input("账户ID: ").strip()
+                    if aid not in accounts:
+                        print(f"错误：账户 {aid} 不存在")
+                        continue
+                    amount_str = input("存入金额: ").strip()
+                    try:
+                        amount = float(amount_str)
+                        acct = accounts[aid]
+                        old_balance = acct.get_balance()
+                        acct.deposit(amount)
+                        save_accounts(accounts)
+                        print(f"成功：已存入 {amount:.2f}，当前余额 {acct.get_balance():.2f}")
+                        # 撤销：恢复余额
+                        undo_stack.push({"action": "account_deposit", "account_id": aid, "old_balance": old_balance, "amount": amount})
+                    except InvalidAmountError as e:
+                        print(f"错误：{e}")
+                    continue
+                
+                elif acct_choice == "5":
+                    # 取款
+                    aid = input("账户ID: ").strip()
+                    if aid not in accounts:
+                        print(f"错误：账户 {aid} 不存在")
+                        continue
+                    amount_str = input("取出金额: ").strip()
+                    try:
+                        amount = float(amount_str)
+                        acct = accounts[aid]
+                        old_balance = acct.get_balance()
+                        acct.withdraw(amount)
+                        save_accounts(accounts)
+                        print(f"成功：已取出 {amount:.2f}，当前余额 {acct.get_balance():.2f}")
+                        # 撤销：恢复余额
+                        undo_stack.push({"action": "account_withdraw", "account_id": aid, "old_balance": old_balance, "amount": amount})
+                    except (InsufficientFundsError, InvalidAmountError) as e:
+                        print(f"错误：{e}")
+                    continue
+                
+                elif acct_choice == "6":
+                    # 查看账户余额
+                    aid = input("账户ID: ").strip()
+                    if aid not in accounts:
+                        print(f"错误：账户 {aid} 不存在")
+                        continue
+                    acct = accounts[aid]
+                    print(f"账户 {aid} 余额: {acct.get_balance():.2f}")
+                    continue
+                
+                elif acct_choice == "7":
+                    # 计算利息
+                    aid = input("账户ID: ").strip()
+                    if aid not in accounts:
+                        print(f"错误：账户 {aid} 不存在")
+                        continue
+                    acct = accounts[aid]
+                    # 显示账户默认利率信息
+                    if isinstance(acct, SavingsAccount):
+                        print(f"账户默认年利率: {acct.interest_rate * 100:.1f}%")
+                    else:
+                        print(f"信用账户欠款利率: 20.0%")
+                    rate_input = input("输入自定义年利率(%%，直接回车使用默认利率): ").strip()
+                    if rate_input:
+                        try:
+                            custom_rate = float(rate_input) / 100
+                            if custom_rate < 0:
+                                print("错误：利率不能为负数")
+                                continue
+                            if isinstance(acct, SavingsAccount):
+                                interest = acct.get_balance() * custom_rate
+                                print(f"账户 {aid} (储蓄) 按利率 {custom_rate*100:.1f}% 计算利息: {interest:.2f}")
+                            else:
+                                if acct.get_balance() < 0:
+                                    interest = abs(acct.get_balance()) * custom_rate
+                                    print(f"账户 {aid} (信用) 按利率 {custom_rate*100:.1f}% 计算欠款利息: {interest:.2f}")
+                                else:
+                                    print(f"账户 {aid} (信用) 当前无欠款，利息为 0.00")
+                        except ValueError:
+                            print("错误：请输入有效的数字")
+                    else:
+                        interest = acct.calculate_interest()
+                        print(f"账户 {aid} ({acct.get_account_type()}) 计算利息: {interest:.2f}")
+                        if isinstance(acct, SavingsAccount):
+                            print(f"  （当前余额 {acct.get_balance():.2f}，利率 {acct.interest_rate*100:.1f}%）")
+                        elif acct.get_balance() < 0:
+                            print(f"  （当前欠款 {abs(acct.get_balance()):.2f}，利率20%）")
+                    continue
+                
+                elif acct_choice == "8":
+                    # 删除账户
+                    aid = input("账户ID: ").strip()
+                    if aid not in accounts:
+                        print(f"错误：账户 {aid} 不存在")
+                        continue
+                    acct = accounts[aid]
+                    print(f"\n待删除账户：{acct}")
+                    # 检查有关联交易
+                    related_count = 0
+                    current_node = file.head
+                    while current_node:
+                        if current_node.data.account_id == aid:
+                            related_count += 1
+                        current_node = current_node.next
+                    if related_count > 0:
+                        print(f"⚠ 该账户有 {related_count} 条关联交易记录，删除后这些交易将不再关联账户")
+                    confirm = input("确认删除？(Y/N): ").strip().upper()
+                    if confirm == "Y":
+                        old_acct_data = acct.to_dict()
+                        del accounts[aid]
+                        save_accounts(accounts)
+                        # 将关联交易的 account_id 置为 None
+                        current_node = file.head
+                        while current_node:
+                            if current_node.data.account_id == aid:
+                                current_node.data.account_id = None
+                            current_node = current_node.next
+                        save_data(file)
+                        # 撤销：恢复账户
+                        undo_stack.push({"action": "restore_account", "account_data": old_acct_data})
+                        print(f"成功：账户 {aid} 已删除")
+                    else:
+                        print("已取消删除")
+                    continue
+                
+                elif acct_choice == "9":
+                    # 查看账户关联交易
+                    aid = input("账户ID: ").strip()
+                    if aid not in accounts:
+                        print(f"错误：账户 {aid} 不存在")
+                        continue
+                    related_txs = []
+                    current_node = file.head
+                    while current_node:
+                        if current_node.data.account_id == aid:
+                            related_txs.append(current_node.data)
+                        current_node = current_node.next
+                    if related_txs:
+                        print(f"\n账户 {aid} 关联交易共 {len(related_txs)} 条：")
+                        print("-" * 50)
+                        for tx in related_txs:
+                            print(f"  #{tx.tid} | {tx.type} | {tx.amount}元 | 分类:{tx.category} | {tx.date} | {tx.note}")
+                    else:
+                        print(f"账户 {aid} 暂无关联交易记录")
+                    continue
+                
+                elif acct_choice == "0":
+                    break
+                else:
+                    print("无效选择，请重新输入")
+                    continue
 
 
     
@@ -510,6 +809,28 @@ def load_categories(category_mgr, filepath=CATEGORY_FILE):
 def save_categories(category_mgr, filepath=CATEGORY_FILE):
     """保存分类树到 JSON 文件"""
     data = category_mgr.to_dict()
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+# ========== 账户数据读写 ==========
+def load_accounts(filepath=ACCOUNT_FILE) -> dict:
+    """从 JSON 文件加载账户数据，返回 {account_id: Account} 字典"""
+    accounts = {}
+    if not os.path.exists(filepath):
+        return accounts
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read()
+    if not content.strip():
+        return accounts
+    data_list = json.loads(content)
+    for item in data_list:
+        acct = Account.from_dict(item)
+        accounts[acct.account_id] = acct
+    return accounts
+
+def save_accounts(accounts: dict, filepath=ACCOUNT_FILE):
+    """保存账户数据到 JSON 文件"""
+    data = [acct.to_dict() for acct in accounts.values()]
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
