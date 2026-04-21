@@ -10,6 +10,7 @@ from models.notification import NotificationManager
 from models.category import CategoryManager
 
 DATA_FILE = "data/data.json"
+CATEGORY_FILE = "data/categories.json"
 
 
 def show_menu(unread=0):
@@ -42,7 +43,7 @@ def main():
     notifier = NotificationManager()
     # 分类管理器：Tree + Set
     category_mgr = CategoryManager()
-    category_mgr.init_default_categories()
+    load_categories(category_mgr)
     notifier.send("info", "欢迎使用 Finance Tracker！数据已加载完成。")
     print("=== Finance_Tracker ===")
     
@@ -71,6 +72,7 @@ def main():
                 parent = "支出" if type_ == "支出" else "收入"
                 if category_mgr.add_category(parent, category):
                     print(f"已自动添加新分类 '{category}' 到 '{parent}' 下")
+                    save_categories(category_mgr)
             date = input("日期(YYYY-MM-DD): ")
             note = input("备注(可留空): ")
             add_transaction(file, tid, type_, amount, category, date, note, tid_index)
@@ -271,6 +273,40 @@ def main():
             if undo_stack.is_empty():
                 print("没有可撤销的操作")
             else:
+                # 先 peek 展示待撤销操作详情，让用户确认
+                op = undo_stack.peek()
+                print(f"待撤销的操作类型: {op['action']}")
+                print("-" * 40)
+                if op["action"] == "add":
+                    tid = op["tid"]
+                    tx = get_transaction_by_tid(tid, tid_index)
+                    print(f"操作: 添加了交易 #{tid}")
+                    if tx:
+                        print(f"详情: #{tx.tid} | {tx.type} | {tx.amount}元 | 分类:{tx.category} | {tx.date}")
+                    print("撤销效果: 将删除该交易记录")
+                elif op["action"] == "delete":
+                    data = op["data"]
+                    print(f"操作: 删除了交易 #{data['tid']}")
+                    print(f"详情: #{data['tid']} | {data['type']} | {data['amount']}元 | 分类:{data['category']} | {data['date']} | {data.get('note', '')}")
+                    print("撤销效果: 将恢复该交易记录")
+                elif op["action"] == "update":
+                    old_data = op["old_data"]
+                    print(f"操作: 修改了交易 #{old_data['tid']}")
+                    print(f"原始值: #{old_data['tid']} | {old_data['type']} | {old_data['amount']}元 | 分类:{old_data['category']} | {old_data['date']} | {old_data.get('note', '')}")
+                    print("撤销效果: 将恢复为上述原始值")
+                elif op["action"] == "delete_category":
+                    snapshot = op["snapshot"]
+                    cats = snapshot.get("categories", [])
+                    cat_names = [name for name, _ in cats]
+                    print(f"操作: 删除了分类（共 {len(cats)} 个）")
+                    print(f"被删分类: {cat_names}")
+                    print("撤销效果: 将恢复上述分类到分类树中")
+                print("-" * 40)
+                confirm = input("确认执行撤销？(Y/N): ").strip().upper()
+                if confirm != "Y":
+                    print("已取消撤销")
+                    continue
+                # 确认后 pop 执行
                 op = undo_stack.pop()
                 if op["action"] == "add":
                     # 撤销添加 = 删除该交易
@@ -305,6 +341,12 @@ def main():
                     else:
                         # tid 被修改过，需要通过当前值找到再改回
                         print(f"无法自动撤销交易 #{old_tid} 的修改（tid 可能已被更改）")
+                elif op["action"] == "delete_category":
+                    # 撤销分类删除 = 恢复分类树
+                    snapshot = op["snapshot"]
+                    category_mgr.restore_category(snapshot)
+                    save_categories(category_mgr)
+                    print(f"已撤销：恢复了分类（共 {len(snapshot.get('categories', []))} 个）")
 
         elif choice == "9":
             print("--- 通知中心 ---")
@@ -360,14 +402,38 @@ def main():
                         print(f"错误：分类 '{del_cat}' 不存在")
                         continue
                     else:
-                        # 显示即将删除的分类及其子分类
-                        subcats = category_mgr.get_subcategories(del_cat)
-                        if subcats:
-                            print(f"注意：分类 '{del_cat}' 下还有子分类 {subcats}，将一并删除")
-                        confirm = input(f"确认删除分类 '{del_cat}'？(Y/N): ").strip().upper()
+                        # 1. 展示待删除的分类及其所有子分类
+                        all_descendants = category_mgr.get_descendant_names(del_cat)
+                        affected_cats = [del_cat] + all_descendants
+                        print(f"\n{'='*50}")
+                        print(f"待删除分类: {del_cat}")
+                        if all_descendants:
+                            print(f"包含子分类: {all_descendants}")
+                        print(f"受影响分类共 {len(affected_cats)} 个: {affected_cats}")
+                        # 2. 展示所有关联交易记录详情
+                        related_txs = []
+                        current_node = file.head
+                        while current_node:
+                            if current_node.data.category in affected_cats:
+                                related_txs.append(current_node.data)
+                            current_node = current_node.next
+                        if related_txs:
+                            print(f"\n该分类下共有 {len(related_txs)} 条关联交易记录：")
+                            print("-" * 50)
+                            for tx in related_txs:
+                                print(f"  #{tx.tid} | {tx.type} | {tx.amount}元 | 分类:{tx.category} | {tx.date} | {tx.note}")
+                        else:
+                            print("\n该分类下无关联交易记录")
+                        # 3. 二次确认
+                        print(f"{'='*50}")
+                        confirm = input(f"⚠ 确认删除分类 '{del_cat}' 及其所有子分类？此操作可通过菜单8撤销。(Y/N): ").strip().upper()
                         if confirm == "Y":
-                            if category_mgr.remove_category(del_cat):
-                                print(f"成功：分类 '{del_cat}' 及其子分类已删除")
+                            snapshot = category_mgr.remove_category(del_cat)
+                            if snapshot:
+                                # 压入撤销栈
+                                undo_stack.push({"action": "delete_category", "snapshot": snapshot})
+                                save_categories(category_mgr)
+                                print(f"成功：分类 '{del_cat}' 及其子分类已删除（可通过菜单8撤销）")
                             else:
                                 print(f"错误：删除失败")
                             continue
@@ -424,6 +490,28 @@ def save_data(linked_list, filepath=DATA_FILE):
     
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(transactions, f, ensure_ascii=False, indent=2)
+
+# ========== 分类数据读写 ==========
+def load_categories(category_mgr, filepath=CATEGORY_FILE):
+    """从 JSON 文件加载分类树，文件不存在则使用默认分类"""
+    if not os.path.exists(filepath):
+        category_mgr.init_default_categories()
+        save_categories(category_mgr, filepath)
+        return
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read()
+    if not content.strip():
+        category_mgr.init_default_categories()
+        save_categories(category_mgr, filepath)
+        return
+    data = json.loads(content)
+    category_mgr.from_dict(data)
+
+def save_categories(category_mgr, filepath=CATEGORY_FILE):
+    """保存分类树到 JSON 文件"""
+    data = category_mgr.to_dict()
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 if __name__ == "__main__":
     main()

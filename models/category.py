@@ -93,26 +93,94 @@ class CategoryManager:
             return self.tree.get_path(node)
         return []
 
-    def remove_category(self, category_name: str) -> bool:
+    def get_descendant_names(self, category_name: str):
+        """获取指定分类的所有后代分类名（递归）"""
+        node = self.tree.find(category_name)
+        if node is None:
+            return []
+        return [d.data for d in node.descendants()]
+
+    def remove_category(self, category_name: str) -> dict:
         """
         删除分类及其所有子分类
         不允许删除根节点（"全部分类"）
-        返回 True 表示删除成功，False 表示分类不存在或为根节点
+        返回删除快照 dict，包含 parent_name, categories 列表，
+        可用于撤销恢复；删除失败返回空 dict
         """
         if category_name == "全部分类":
-            return False
+            return {}
         node = self.tree.find(category_name)
         if node is None:
-            return False
-        # 收集该节点及其所有后代，从 Set 中移除
+            return {}
+        # 保存快照：父分类名 + 被删除的所有分类（按父子关系记录）
+        parent_name = node.parent.data if node.parent else None
+        removed_categories = []  # [(name, parent_name), ...]
+        # 先记录后代（先记录深层，再记录浅层，这样恢复时先加浅层再加深层）
         descendants = node.descendants()
+        for d in descendants:
+            d_parent = d.parent.data if d.parent else None
+            removed_categories.append((d.data, d_parent))
+        # 再记录自身
+        removed_categories.append((category_name, parent_name))
+        # 从 Set 中移除
         for d in descendants:
             self.category_set.remove(d.data)
         self.category_set.remove(category_name)
         # 从父节点中移除该子树
         if node.parent:
             node.parent.remove_child(node)
+        return {"parent_name": parent_name, "categories": removed_categories}
+
+    def restore_category(self, snapshot: dict) -> bool:
+        """
+        根据删除快照恢复分类（撤销删除）
+        快照中的 categories 列表按 先深层后浅层 排列，
+        需要逆序恢复（先加浅层父分类，再加深层子分类）
+        """
+        if not snapshot or "categories" not in snapshot:
+            return False
+        # 逆序恢复：先恢复浅层（父分类），再恢复深层（子分类）
+        for name, parent_name in reversed(snapshot["categories"]):
+            # 重新添加到树和集合
+            parent_node = self.tree.find(parent_name)
+            if parent_node is None:
+                # 父节点尚未恢复，跳过
+                continue
+            if not self.category_set.contains(name):
+                parent_node.add_child(TreeNode(name))
+                self.category_set.add(name)
         return True
+
+    def _tree_to_dict(self, node):
+        """递归将树节点序列化为字典"""
+        result = {"name": node.data, "children": []}
+        for child in node.children:
+            result["children"].append(self._tree_to_dict(child))
+        return result
+
+    def _dict_to_tree(self, data, parent_node):
+        """递归从字典恢复树节点"""
+        for child_data in data.get("children", []):
+            child_node = TreeNode(child_data["name"])
+            parent_node.add_child(child_node)
+            self.category_set.add(child_data["name"])
+            self._dict_to_tree(child_data, child_node)
+
+    def to_dict(self):
+        """将分类树序列化为字典（用于 JSON 存储）"""
+        if self.tree.root is None:
+            return {}
+        return self._tree_to_dict(self.tree.root)
+
+    def from_dict(self, data):
+        """从字典恢复分类树（从 JSON 加载）"""
+        if not data:
+            return
+        # 重建树
+        self.tree = Tree(TreeNode(data["name"]))
+        self.category_set = Set()
+        self.category_set.add(data["name"])
+        self._dict_to_tree(data, self.tree.root)
 
     def get_category_statistics(self, linked_list):
         """按分类汇总金额统计"""

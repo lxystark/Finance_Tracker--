@@ -1,0 +1,65 @@
+{
+  "name": "全部分类",
+  "children": [
+    {
+      "name": "支出",
+      "children": [
+        {
+          "name": "餐饮",
+          "children": [
+            {
+              "name": "外卖",
+              "children": []
+            },
+            {
+              "name": "堂食",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "交通",
+          "children": [
+            {
+              "name": "公交",
+              "children": []
+            },
+            {
+              "name": "打车",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "娱乐",
+          "children": []
+        },
+        {
+          "name": "购物",
+          "children": []
+        },
+        {
+          "name": "房租",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "收入",
+      "children": [
+        {
+          "name": "工资",
+          "children": []
+        },
+        {
+          "name": "兼职",
+          "children": []
+        },
+        {
+          "name": "红包",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
