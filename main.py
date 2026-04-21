@@ -4,20 +4,25 @@ import os
 from structures.linked_list import DoublyLinkedList
 from structures.hashmap import HashMap
 from structures.bst import BST
+from structures.stack import Stack
 from models.transaction import *
+from models.notification import NotificationManager
 
 DATA_FILE = "data/data.json"
 
 
-def show_menu():
-    print('''
-    1. 添加交易记录Add Transcations
-    2.删除交易记录
-    3.修改交易记录
-    4.查看交易记录（JSON）
-    5.查看交易记录（双向链表）
-    6.EXIT
-    7.更多功能
+def show_menu(unread=0):
+    notify_hint = f" ({unread}条未读)" if unread > 0 else ""
+    print(f'''
+    1. 添加交易记录
+    2. 删除交易记录
+    3. 修改交易记录
+    4. 查看交易记录（JSON）
+    5. 查看交易记录（双向链表）
+    6. EXIT
+    7. 更多功能
+    8. 撤销操作
+    9. 查看通知{notify_hint}
     ''')
 
 # ========== 主程序 ==========
@@ -29,11 +34,16 @@ def main():
     # 构建 BST 索引，支持 O(log n) 范围查询
     date_index = build_date_index(file)
     amount_index = build_amount_index(file)
+    # 撤销栈：记录反向操作
+    undo_stack = Stack()
+    # 通知管理器：大额/异常提醒
+    notifier = NotificationManager()
+    notifier.send("info", "欢迎使用 Finance Tracker！数据已加载完成。")
     print("=== Finance_Tracker ===")
     
     transactions = file.to_list()
     while True:
-        show_menu()
+        show_menu(unread=notifier.unread_count())
         choice = input("请选择 (num): ").strip()
 
         if choice == "1":
@@ -52,6 +62,12 @@ def main():
             note = input("备注(可留空): ")
             add_transaction(file, tid, type_, amount, category, date, note, tid_index)
             save_data(file)
+            # 记录撤销操作：撤销添加 = 删除
+            undo_stack.push({"action": "add", "tid": tid})
+            # 通知检查
+            if type_ == "支出":
+                notifier.check_large_expense(amount, tid)
+            notifier.check_negative_amount(amount, tid)
             continue
 
         elif choice == "2":
@@ -82,9 +98,14 @@ def main():
                     # 确认删除
                     confirm = input("确认删除？(Y/N): ").strip().upper()
                     if confirm == "Y":
+                        # 保存删除前的完整数据用于撤销
+                        old_data = transaction.to_dict() if transaction else None
                         delete_transaction(file, tid, tid_index)
                         save_data(file)
                         print(f"交易ID {tid} 已成功删除")
+                        # 记录撤销操作：撤销删除 = 重新添加
+                        if old_data:
+                            undo_stack.push({"action": "delete", "data": old_data})
                     else:
                         print("已取消删除操作")
                     break
@@ -112,8 +133,10 @@ def main():
                 else:
                     transaction = get_transaction_by_tid(tid, tid_index)
                     if transaction:
+                        # 保存修改前的完整数据用于撤销
+                        old_data = transaction.to_dict()
                         print("\n待修改的交易记录：")
-                        print(json.dumps(transaction.to_dict(), ensure_ascii=False, indent=2))
+                        print(json.dumps(old_data, ensure_ascii=False, indent=2))
                         # 逐字段询问，用户回车保留原值
                         kwargs = {}
                         current = transaction.to_dict()
@@ -160,6 +183,14 @@ def main():
                             update_transaction(file, tid, tid_index, **kwargs)
                             save_data(file)
                             print(f"已修改交易 #{tid}")
+                            # 记录撤销操作：撤销修改 = 恢复原值
+                            undo_stack.push({"action": "update", "old_data": old_data})
+                            # 通知检查
+                            new_amount = kwargs.get('amount', old_data['amount'])
+                            new_type = kwargs.get('type', old_data['type'])
+                            if new_type == "支出":
+                                notifier.check_large_expense(new_amount, kwargs.get('tid', old_data['tid']))
+                            notifier.check_negative_amount(new_amount, kwargs.get('tid', old_data['tid']))
                     break
         elif choice == "4":
             print("=== 查看交易记录 ===")
@@ -221,6 +252,62 @@ def main():
                 pass
             else:
                 print("无效选择，请重新输入")
+
+        elif choice == "8":
+            print("--- 撤销操作 ---")
+            if undo_stack.is_empty():
+                print("没有可撤销的操作")
+            else:
+                op = undo_stack.pop()
+                if op["action"] == "add":
+                    # 撤销添加 = 删除该交易
+                    tid = op["tid"]
+                    if check_tid_exists(tid, tid_index):
+                        delete_transaction(file, tid, tid_index)
+                        save_data(file)
+                        print(f"已撤销：删除了交易 #{tid}")
+                    else:
+                        print(f"无法撤销：交易 #{tid} 已不存在")
+                elif op["action"] == "delete":
+                    # 撤销删除 = 重新添加
+                    data = op["data"]
+                    add_transaction(file, data["tid"], data["type"],
+                                    data["amount"], data["category"],
+                                    data["date"], data.get("note", ""), tid_index)
+                    save_data(file)
+                    print(f"已撤销：恢复了交易 #{data['tid']}")
+                elif op["action"] == "update":
+                    # 撤销修改 = 恢复原值
+                    old_data = op["old_data"]
+                    old_tid = old_data["tid"]
+                    if check_tid_exists(old_tid, tid_index):
+                        # 逐字段恢复
+                        for key, value in old_data.items():
+                            if key != "tid":  # tid 单独处理
+                                t = get_transaction_by_tid(old_tid, tid_index)
+                                if t and hasattr(t, key):
+                                    setattr(t, key, value)
+                        save_data(file)
+                        print(f"已撤销：恢复了交易 #{old_tid} 的原始值")
+                    else:
+                        # tid 被修改过，需要通过当前值找到再改回
+                        print(f"无法自动撤销交易 #{old_tid} 的修改（tid 可能已被更改）")
+
+        elif choice == "9":
+            print("--- 通知中心 ---")
+            if notifier.has_unread():
+                print(f"有 {notifier.unread_count()} 条未读通知：")
+                for n in notifier.read_all():
+                    print(f"  {n}")
+            else:
+                print("暂无未读通知")
+            # 显示历史通知
+            history = notifier.history()
+            if history:
+                print(f"\n已读通知 ({len(history)} 条)：")
+                for n in history[-5:]:  # 只显示最近5条
+                    print(f"  {n}")
+
         else:
             pass
 #这里写保存数据的代码
