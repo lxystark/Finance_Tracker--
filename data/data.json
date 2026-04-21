@@ -1,5 +1,13 @@
 [
   {
+    "tid": 0,
+    "type": "收入",
+    "amount": 1000000.0,
+    "category": "TEST",
+    "date": "2026-4-21",
+    "note": "1"
+  },
+  {
     "tid": 1,
     "type": "收入",
     "amount": 100000.0,
@@ -8,44 +16,12 @@
     "note": "YEZIDAN PIAOCHANG"
   },
   {
-    "tid": 8,
+    "tid": 4,
     "type": "支出",
-    "amount": 1500.0,
-    "category": "房租",
-    "date": "2026-04-15",
-    "note": "4月房租"
-  },
-  {
-    "tid": 10,
-    "type": "支出",
-    "amount": 45.0,
-    "category": "餐饮",
-    "date": "2026-04-14",
-    "note": ""
-  },
-  {
-    "tid": 9,
-    "type": "收入",
-    "amount": 100.0,
-    "category": "红包",
-    "date": "2026-04-13",
-    "note": "生日红包"
-  },
-  {
-    "tid": 7,
-    "type": "支出",
-    "amount": 88.0,
-    "category": "娱乐",
-    "date": "2026-04-12",
-    "note": "看电影"
-  },
-  {
-    "tid": 6,
-    "type": "收入",
-    "amount": 200.0,
-    "category": "兼职",
-    "date": "2026-04-10",
-    "note": "周末兼职"
+    "amount": 299.0,
+    "category": "购物",
+    "date": "2026-04-07",
+    "note": "买衣服"
   },
   {
     "tid": 5,
@@ -56,11 +32,43 @@
     "note": "退款"
   },
   {
-    "tid": 4,
+    "tid": 6,
+    "type": "收入",
+    "amount": 200.0,
+    "category": "兼职",
+    "date": "2026-04-10",
+    "note": "周末兼职"
+  },
+  {
+    "tid": 7,
     "type": "支出",
-    "amount": 299.0,
-    "category": "购物",
-    "date": "2026-04-07",
-    "note": "买衣服"
+    "amount": 88.0,
+    "category": "娱乐",
+    "date": "2026-04-12",
+    "note": "看电影"
+  },
+  {
+    "tid": 8,
+    "type": "支出",
+    "amount": 1500.0,
+    "category": "房租",
+    "date": "2026-04-15",
+    "note": "4月房租"
+  },
+  {
+    "tid": 9,
+    "type": "收入",
+    "amount": 100.0,
+    "category": "红包",
+    "date": "2026-04-13",
+    "note": "生日红包"
+  },
+  {
+    "tid": 10,
+    "type": "支出",
+    "amount": 45.0,
+    "category": "餐饮",
+    "date": "2026-04-14",
+    "note": ""
   }
 ]

@@ -2,6 +2,7 @@ from typing import Any
 import json
 import os
 from structures.linked_list import DoublyLinkedList
+from structures.hashmap import HashMap
 from models.transaction import *
 
 DATA_FILE = "data/data.json"
@@ -22,6 +23,8 @@ def show_menu():
 def main():
     # 程序启动：从文件加载数据
     file = load_data()
+    # 构建 tid 索引，查找从 O(n) 提升为 O(1)
+    tid_index = build_tid_index(file)
     print("=== Finance_Tracker ===")
     
     transactions = file.to_list()
@@ -34,7 +37,7 @@ def main():
             # tid 查重循环
             while True:
                 tid = int(input("交易ID: "))
-                if check_tid_exists(file, tid):
+                if check_tid_exists(tid, tid_index):
                     print(f"错误：交易ID {tid} 已存在，请重新输入")
                 else:
                     break
@@ -43,7 +46,7 @@ def main():
             category = input("分类: ")
             date = input("日期(YYYY-MM-DD): ")
             note = input("备注(可留空): ")
-            add_transaction(file, tid, type_, amount, category, date, note)
+            add_transaction(file, tid, type_, amount, category, date, note, tid_index)
             save_data(file)
             continue
 
@@ -63,25 +66,24 @@ def main():
                 except ValueError:
                     print("错误：请输入有效的tid")
                     continue
-                if not check_tid_exists(file, tid):
+                if not check_tid_exists(tid, tid_index):
                     print(f"错误：交易ID {tid} 不存在，无法执行删除操作")
                     continue
                 else:
-                                
-                # 显示待删除的交易详情
-                    transaction = get_transaction_by_tid(file, tid)
+                    # 显示待删除的交易详情
+                    transaction = get_transaction_by_tid(tid, tid_index)
                     if transaction:
                         print("\n待删除的交易记录：")
                         print(json.dumps(transaction.to_dict(), ensure_ascii=False, indent=2))
-                # 确认删除
+                    # 确认删除
                     confirm = input("确认删除？(Y/N): ").strip().upper()
                     if confirm == "Y":
-                        delete_transaction(file, tid)
+                        delete_transaction(file, tid, tid_index)
                         save_data(file)
                         print(f"交易ID {tid} 已成功删除")
                     else:
                         print("已取消删除操作")
-                        continue
+                    break
 
 
         elif choice == "3":#根据tid定向修改交易记录的功能，tid也可修改
@@ -100,11 +102,11 @@ def main():
                 except ValueError:
                     print("错误：请输入有效的tid")
                     continue
-                if not check_tid_exists(file, tid):
+                if not check_tid_exists(tid, tid_index):
                     print(f"错误：交易ID {tid} 不存在，无法执行修改操作")
                     continue
                 else:
-                    transaction = get_transaction_by_tid(file, tid)
+                    transaction = get_transaction_by_tid(tid, tid_index)
                     if transaction:
                         print("\n待修改的交易记录：")
                         print(json.dumps(transaction.to_dict(), ensure_ascii=False, indent=2))
@@ -116,7 +118,7 @@ def main():
                         if new_tid_str:
                             try:
                                 new_tid = int(new_tid_str)
-                                if check_tid_exists(file, new_tid) and new_tid != current['tid']:
+                                if check_tid_exists(new_tid, tid_index) and new_tid != current['tid']:
                                     print(f"错误：交易ID {new_tid} 已存在，请重新操作")
                                     continue
                                 kwargs['tid'] = new_tid
@@ -151,7 +153,7 @@ def main():
                         if not kwargs:
                             print("未做任何修改")
                         else:
-                            update_transaction(file, tid, **kwargs)
+                            update_transaction(file, tid, tid_index, **kwargs)
                             save_data(file)
                             print(f"已修改交易 #{tid}")
                     break

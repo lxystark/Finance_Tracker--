@@ -5,6 +5,7 @@
 
 from datetime import datetime
 from structures.linked_list import DoublyLinkedList
+from structures.hashmap import HashMap
 
 
 class Transaction:
@@ -46,66 +47,72 @@ class Transaction:
 
 
 
-def delete_transaction(linked_list: DoublyLinkedList, tid):
-    """根据交易ID删除"""
+def build_tid_index(linked_list: DoublyLinkedList) -> HashMap:
+    """根据链表构建 tid -> Node 的哈希索引，查找从 O(n) 提升为 O(1)"""
+    index = HashMap()
     current = linked_list.head
     while current:
-        if current.data.tid == tid:
-            linked_list.remove(current)
-            print(f"已删除交易 #{tid}")
-            return True
+        index.put(current.data.tid, current)
         current = current.next
-    print(f"未找到交易 #{tid}")
-    return False
-
-def check_tid_exists(linked_list: DoublyLinkedList, tid) -> bool:
-    """检查 tid 是否已存在"""
-    current = linked_list.head
-    while current:
-        if current.data.tid == tid:
-            return True
-        current = current.next
-    return False
+    return index
 
 
-def get_transaction_by_tid(linked_list: DoublyLinkedList, tid):
-    """根据 tid 获取交易记录"""
-    current = linked_list.head
-    while current:
-        if current.data.tid == tid:
-            return current.data
-        current = current.next
+def check_tid_exists(tid, index: HashMap) -> bool:
+    """检查 tid 是否已存在（通过 HashMap 索引 O(1) 查找）"""
+    return index.contains_key(tid)
+
+
+def get_transaction_by_tid(tid, index: HashMap):
+    """根据 tid 获取交易记录（通过 HashMap 索引 O(1) 查找）"""
+    node = index.get(tid)
+    if node is not None:
+        return node.data
     return None
 
 
-def add_transaction(linked_list: DoublyLinkedList, tid, type, amount, category, date, note=""):
-    """添加交易"""
-    t = Transaction(tid,type,amount,category,date,note)
+def delete_transaction(linked_list: DoublyLinkedList, tid, index: HashMap):
+    """根据交易ID删除（通过 HashMap 索引定位，并同步更新索引）"""
+    node = index.get(tid)
+    if node is not None:
+        linked_list.remove(node)
+        index.remove(tid)
+        print(f"已删除交易 #{tid}")
+        return True
+    print(f"未找到交易 #{tid}")
+    return False
+
+
+def add_transaction(linked_list: DoublyLinkedList, tid, type, amount, category, date, note="", index: HashMap = None):
+    """添加交易（同步更新 HashMap 索引）"""
+    t = Transaction(tid, type, amount, category, date, note)
     linked_list.prepend(t)
+    if index is not None:
+        # prepend 后 head 就是新节点
+        index.put(tid, linked_list.head)
     print(f"已添加交易#{tid}")
 
 
-def update_transaction(linked_list: DoublyLinkedList, target_tid, **kwargs):
-    """根据交易ID修改，kwargs 是要修改的字段"""
+def update_transaction(linked_list: DoublyLinkedList, target_tid, index: HashMap, **kwargs):
+    """根据交易ID修改，kwargs 是要修改的字段（通过 HashMap 索引定位，并同步更新索引）"""
     # 允许修改的字段白名单
-    ALLOWED_FIELDS = {"tid","type", "amount", "category", "date", "note"}
+    ALLOWED_FIELDS = {"tid", "type", "amount", "category", "date", "note"}
 
-    current = linked_list.head
-
-    while current:
-        if current.data.tid == target_tid:
-            for key, value in kwargs.items():
-                if key not in ALLOWED_FIELDS:
-                    print(f"key:'{key}' is not allowed to update")
-                    continue
-
-                if hasattr(current.data, key):
-                    setattr(current.data, key, value)
-            print(f"已修改交易 #{target_tid}")
-            return True
-        current = current.next
-    print(f"未找到交易 #{target_tid}")
-    return False
+    node = index.get(target_tid)
+    if node is None:
+        print(f"未找到交易 #{target_tid}")
+        return False
+    for key, value in kwargs.items():
+        if key not in ALLOWED_FIELDS:
+            print(f"key:'{key}' is not allowed to update")
+            continue
+        if hasattr(node.data, key):
+            setattr(node.data, key, value)
+    # 如果 tid 被修改，需要更新索引中的键
+    if 'tid' in kwargs and kwargs['tid'] != target_tid:
+        index.remove(target_tid)
+        index.put(kwargs['tid'], node)
+    print(f"已修改交易 #{target_tid}")
+    return True
 
 
 def _parse_date(date_str):
