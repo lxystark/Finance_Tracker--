@@ -1,7 +1,9 @@
-"""
-双向链表 - Doubly Linked List
-用于存储交易记录，支持O(1)头部插入
-"""
+'''
+    @Author: Xinyuan Lin
+    It's a doubly_linked_list module use for saving transactions in JSON mode
+    satisfied O(1) for adding/deleting at the head of the list.
+
+'''
 
 class Node:
     """节点"""

@@ -1,4 +1,12 @@
+'''
+    @Author: Xinyuan Lin
+    It's a transactions function for the project. Finance Tracker.
+    Supports CRUD for transactions
+    with hashmap index to search transactions by tid in O(1)
+    use @classmethod to read and write data in JSON
+    use BST to search transactions by time(using datetime module) or amount(of money)
 
+'''
 
 
 

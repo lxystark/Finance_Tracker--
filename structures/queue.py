@@ -1,14 +1,15 @@
-"""
-队列 - Queue
-先进先出（FIFO）数据结构
-用于通知提醒系统（FIFO消费）
-"""
+'''
+    @Author: Yu Chen
+    It's a queue module used for notifications.py
+    队列 - Queue
+    先进先出（FIFO）数据结构
+    用于通知提醒系统（FIFO消费）
+'''
 
 from typing import Any, Optional, List
 
 
 class Queue:
-    """队列：先进先出（FIFO）"""
 
     def __init__(self):
         self._items: List[Any] = []
