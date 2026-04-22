@@ -38,7 +38,8 @@ class Account(ABC):  # 继承ABC，表示这是抽象类，不能直接创建对
             raise InvalidAmountError("取出金额必须大于0")
         if amount > self._balance:
             raise InsufficientFundsError(
-                f"余额不足！当前余额: {self._balance:.2f}, 需要: {amount:.2f}"
+                current_balance=self._balance,
+                requested_amount=amount
             )
         self._balance -= amount
 
@@ -135,7 +136,9 @@ class CreditAccount(Account):
             raise InvalidAmountError("取出金额必须大于0")
         if self._balance - amount < -self.credit_limit:
             raise InsufficientFundsError(
-                f"超出信用额度！当前余额:{self._balance:.2f}, 信用额度:{self.credit_limit:.2f}"
+                current_balance=self._balance,
+                requested_amount=amount,
+                message=f"超出信用额度！当前余额:{self._balance:.2f}, 信用额度:{self.credit_limit:.2f}"
             )
         self._balance -= amount
 

@@ -2,7 +2,7 @@
   {
     "account_id": "A001",
     "owner": "Zhang",
-    "balance": 10000,
+    "balance": 20000.0,
     "type": "savings",
     "interest_rate": 0.03
   },

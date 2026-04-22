@@ -98,7 +98,7 @@ def main():
                         save_accounts(accounts)
                     except (InsufficientFundsError, InvalidAmountError) as e:
                         print(f"账户操作失败: {e}")
-                        account_id = None
+                        continue
                 elif aid_input:
                     print(f"账户 {aid_input} 不存在，交易将不关联账户")
             add_transaction(file, tid, type_, amount, category, date, note, tid_index, account_id)
