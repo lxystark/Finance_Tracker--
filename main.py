@@ -1,3 +1,10 @@
+'''
+    @Author: Xinyuan Lin
+    It's a main function for the project. Finance Tracker.
+    We combined all the data structures and models in this main program.
+    We finished end-to-end testing. on this main program.
+
+'''
 from typing import Any
 import json
 import os

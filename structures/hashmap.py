@@ -1,8 +1,12 @@
-"""
-哈希表 - Hash Map
-采用链地址法（Separate Chaining）解决冲突
-键 -> 值 映射，支持 O(1) 查找、插入、删除
-"""
+'''
+    @Author: Yu Chen
+    It's a hash map module used for mapping transactions by its tid
+    doubly_linked_list use O(n) to search transactions by tid
+    if we use hash map, it will be in O(1), which is more efficient in large data handling
+    哈希表 - Hash Map
+    采用链地址法（Separate Chaining）解决冲突
+    键 -> 值 映射，支持 O(1) 查找、插入、删除
+'''
 
 from typing import Any, List, Optional
 

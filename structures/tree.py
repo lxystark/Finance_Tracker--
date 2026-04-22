@@ -1,8 +1,14 @@
-"""
-多叉树 - Tree
-支持任意数量的子节点
-用于构建多级分类体系（如：支出 > 餐饮 > 外卖）
-"""
+
+'''
+    @Author: Yu Chen
+    It's a tree module used for building category system(for transactions).
+    多叉树 - Tree
+    支持任意数量的子节点
+    用于构建多级分类体系（如：支出 > 餐饮 > 外卖）
+
+'''
+
+
 
 from typing import Any, Optional, List
 from collections import deque

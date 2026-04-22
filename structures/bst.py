@@ -1,8 +1,11 @@
-"""
-二叉搜索树 - Binary Search Tree
-支持插入、搜索、范围查询、中序遍历
-用于按日期或金额进行范围查询
-"""
+'''
+    @Author: Yu Chen
+    It's a binary search tree module used for searching transactions by date or amount.
+    二叉搜索树 - Binary Search Tree
+    支持插入、搜索、范围查询、中序遍历
+    用于按日期或金额进行范围查询
+
+'''
 
 from typing import Any, List, Optional, Callable
 

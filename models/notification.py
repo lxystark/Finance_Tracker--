@@ -1,9 +1,10 @@
-"""
-通知模块 - Notification System
-基于 Queue 实现 FIFO 通知消费
-用于预算超支和大额支出提醒
-"""
-
+'''
+    @Author: Erhao Yao
+    It's a notification module based on queue.py
+    通知模块 - Notification System
+    基于 Queue 实现 FIFO 通知消费
+    用于预算超支和大额支出提醒
+'''
 from structures.queue import Queue
 from datetime import datetime
 

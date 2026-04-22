@@ -1,8 +1,10 @@
-"""
-分类管理器 - CategoryManager
-整合 Tree（多级分类层次） + Set（分类名唯一）
-"""
-
+'''
+    @Author: Erhao Yao
+    It's a category function for the project.
+    Used for manage transactions
+    分类管理器 - CategoryManager
+    整合 Tree（多级分类层次） + Set（分类名唯一）
+'''
 from structures.tree import Tree, TreeNode
 from structures.set import Set
 

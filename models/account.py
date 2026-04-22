@@ -1,3 +1,9 @@
+'''
+    @Author: Zidan Ye
+    It's a account module based on abstractmethod with some custumed exceptions
+    support to manage credit cards or savings account
+
+'''
 from abc import ABC, abstractmethod  # 导入抽象类工具
 from exceptions import InsufficientFundsError, InvalidAmountError
 

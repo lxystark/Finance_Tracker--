@@ -1,4 +1,10 @@
-# 自定义异常定义（项目统一异常源）
+'''
+    @Author: Xinyuan Lin
+    It's a custum exceptions module for the project.
+    We combined all the exceptions in this program.
+    自定义异常定义（项目统一异常源）
+
+'''
 
 
 class InsufficientFundsError(Exception):

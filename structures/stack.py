@@ -1,8 +1,11 @@
-"""
-栈 - Stack
-后进先出（LIFO）数据结构
-用于撤销/重做功能
-"""
+'''
+    @Author: Yu Chen
+    It's a stack module used for undo statement management.
+    栈 - Stack
+    后进先出（LIFO）数据结构
+    用于撤销/重做功能
+'''
+
 
 from typing import Any, Optional, List
 

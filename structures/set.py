@@ -1,8 +1,10 @@
-"""
-集合 - Set
-基于 HashMap 实现，元素唯一
-用于保证分类名全局唯一，防止重复添加
-"""
+'''
+    @Author: Yu Chen
+    It's a set module used for hashmap.py
+    集合 - Set
+    基于 HashMap 实现，元素唯一
+    用于保证分类名全局唯一，防止重复添加
+'''
 
 from typing import Any, List
 from structures.hashmap import HashMap
