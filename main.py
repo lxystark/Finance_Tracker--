@@ -26,17 +26,17 @@ ACCOUNT_FILE = "data/accounts.json"
 def show_menu(unread=0):
     notify_hint = f" ({unread}条未读)" if unread > 0 else ""
     print(f'''
-    1. 添加交易记录
-    2. 删除交易记录
-    3. 修改交易记录
-    4. 查看交易记录（JSON）
-    5. 查看交易记录（双向链表）
+    1. 添加交易记录|| Add Transaction
+    2. 删除交易记录|| Delete Transaction
+    3. 修改交易记录|| Update Transaction
+    4. 查看交易记录（JSON） || Display Transaction in JSON
+    5. 查看交易记录（双向链表）|| Display Transaction in Doubly Linked List
     6. EXIT
-    7. 更多功能
-    8. 撤销操作
-    9. 查看通知{notify_hint}
-    10. 分类管理
-    11. 账户管理
+    7. 更多功能 || More Function
+    8. 撤销操作 || Undo Operation
+    9. 查看通知{notify_hint} || Notification
+    10. 分类管理 || Category Management
+    11. 账户管理 || Account management
     ''')
 
 # ========== 主程序 ==========
